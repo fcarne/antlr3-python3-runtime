@@ -134,6 +134,9 @@ class Token(object):
     def index(self, value):
         self._index = value
 
+    # For compatibility
+    def getTokenIndex(self):
+        return self._index
 
     def getInputStream(self):
         """@brief From what character stream was this token created.
