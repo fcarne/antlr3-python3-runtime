@@ -143,3 +143,10 @@ __version__ = "3.4"
 # This runtime is compatible with generated parsers using the
 # API versions listed in constants.compatible_api_versions.
 # 'HEAD' is only used by unittests.
+
+from .constants import *
+from .dfa import *
+from .exceptions import *
+from .recognizers import *
+from .streams import *
+from .tokens import *
