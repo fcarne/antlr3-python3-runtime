@@ -27,9 +27,6 @@ repos:
         args:
           - "--in-place"
           - "--expand-star-imports"
-          # - "--remove-duplicate-keys"
-          # - "--remove-unused-variables"
-          - "--remove-all-unused-imports"
 
   - repo: local
     hooks:
