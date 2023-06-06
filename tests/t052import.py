@@ -1,19 +1,20 @@
-import unittest
+import sys
 import textwrap
+import unittest
+
+import testbase
+
 import antlr3
 import antlr3.tree
-import testbase
-import sys
+
 
 class T(testbase.ANTLRTest):
     def setUp(self):
         self.oldPath = sys.path[:]
         sys.path.insert(0, self.baseDir)
 
-
     def tearDown(self):
         sys.path = self.oldPath
-
 
     def parserClass(self, base):
         class TParser(base):
@@ -22,25 +23,20 @@ class T(testbase.ANTLRTest):
 
                 self._output = ""
 
-
             def capture(self, t):
                 self._output += t
 
-
             def traceIn(self, ruleName, ruleIndex):
-                self.traces.append('>'+ruleName)
-
+                self.traces.append(">" + ruleName)
 
             def traceOut(self, ruleName, ruleIndex):
-                self.traces.append('<'+ruleName)
-
+                self.traces.append("<" + ruleName)
 
             def recover(self, input, re):
                 # no error recovery yet, just crash!
                 raise
 
         return TParser
-
 
     def lexerClass(self, base):
         class TLexer(base):
@@ -49,18 +45,14 @@ class T(testbase.ANTLRTest):
 
                 self._output = ""
 
-
             def capture(self, t):
                 self._output += t
 
-
             def traceIn(self, ruleName, ruleIndex):
-                self.traces.append('>'+ruleName)
-
+                self.traces.append(">" + ruleName)
 
             def traceOut(self, ruleName, ruleIndex):
-                self.traces.append('<'+ruleName)
-
+                self.traces.append("<" + ruleName)
 
             def recover(self, input):
                 # no error recovery yet, just crash!
@@ -68,14 +60,13 @@ class T(testbase.ANTLRTest):
 
         return TLexer
 
-
     def execParser(self, grammar, grammarEntry, slaves, input):
         for slave in slaves:
             parserName = self.writeInlineGrammar(slave)[0]
             # slave parsers are imported as normal python modules
             # to force reloading current version, purge module from sys.modules
-            if parserName + 'Parser' in sys.modules:
-                del sys.modules[parserName + 'Parser']
+            if parserName + "Parser" in sys.modules:
+                del sys.modules[parserName + "Parser"]
 
         lexerCls, parserCls = self.compileInlineGrammar(grammar)
 
@@ -87,14 +78,13 @@ class T(testbase.ANTLRTest):
 
         return parser._output
 
-
     def execLexer(self, grammar, slaves, input):
         for slave in slaves:
             parserName = self.writeInlineGrammar(slave)[0]
             # slave parsers are imported as normal python modules
             # to force reloading current version, purge module from sys.modules
-            if parserName + 'Parser' in sys.modules:
-                del sys.modules[parserName + 'Parser']
+            if parserName + "Parser" in sys.modules:
+                del sys.modules[parserName + "Parser"]
 
         lexerCls = self.compileInlineGrammar(grammar)
 
@@ -110,10 +100,9 @@ class T(testbase.ANTLRTest):
 
         return lexer._output
 
-
     def testDelegatorInvokesDelegateRule(self):
         slave = textwrap.dedent(
-        r'''
+            r"""
         parser grammar S1;
         options {
             language=Python3;
@@ -125,10 +114,11 @@ class T(testbase.ANTLRTest):
         }
 
         a : B { self.capture("S.a") } ;
-        ''')
+        """
+        )
 
         master = textwrap.dedent(
-        r'''
+            r"""
         grammar M1;
         options {
             language=Python3;
@@ -137,20 +127,16 @@ class T(testbase.ANTLRTest):
         s : a ;
         B : 'b' ; // defines B from inherited token space
         WS : (' '|'\n') {self.skip()} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            master, 's',
-            slaves=[slave],
-            input="b"
-            )
+        found = self.execParser(master, "s", slaves=[slave], input="b")
 
         self.assertEqual("S.a", found)
 
-
     def testDelegatorInvokesDelegateRuleWithArgs(self):
         slave = textwrap.dedent(
-        r'''
+            r"""
         parser grammar S2;
         options {
             language=Python3;
@@ -160,10 +146,11 @@ class T(testbase.ANTLRTest):
                 self.gM2.capture(t)
         }
         a[x] returns [y] : B {self.capture("S.a"); $y="1000";} ;
-        ''')
+        """
+        )
 
         master = textwrap.dedent(
-        r'''
+            r"""
         grammar M2;
         options {
             language=Python3;
@@ -172,20 +159,16 @@ class T(testbase.ANTLRTest):
         s : label=a[3] {self.capture($label.y);} ;
         B : 'b' ; // defines B from inherited token space
         WS : (' '|'\n') {self.skip()} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            master, 's',
-            slaves=[slave],
-            input="b"
-            )
+        found = self.execParser(master, "s", slaves=[slave], input="b")
 
         self.assertEqual("S.a1000", found)
 
-
     def testDelegatorAccessesDelegateMembers(self):
         slave = textwrap.dedent(
-        r'''
+            r"""
         parser grammar S3;
         options {
             language=Python3;
@@ -198,10 +181,11 @@ class T(testbase.ANTLRTest):
                 self.capture("foo")
         }
         a : B ;
-        ''')
+        """
+        )
 
         master = textwrap.dedent(
-        r'''
+            r"""
         grammar M3;        // uses no rules from the import
         options {
             language=Python3;
@@ -209,20 +193,16 @@ class T(testbase.ANTLRTest):
         import S3;
         s : 'b' {self.gS3.foo();} ; // gS is import pointer
         WS : (' '|'\n') {self.skip()} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            master, 's',
-            slaves=[slave],
-            input="b"
-            )
+        found = self.execParser(master, "s", slaves=[slave], input="b")
 
         self.assertEqual("foo", found)
 
-
     def testDelegatorInvokesFirstVersionOfDelegateRule(self):
         slave = textwrap.dedent(
-        r'''
+            r"""
         parser grammar S4;
         options {
             language=Python3;
@@ -233,10 +213,11 @@ class T(testbase.ANTLRTest):
         }
         a : b {self.capture("S.a");} ;
         b : B ;
-        ''')
+        """
+        )
 
         slave2 = textwrap.dedent(
-        r'''
+            r"""
         parser grammar T4;
         options {
             language=Python3;
@@ -246,10 +227,11 @@ class T(testbase.ANTLRTest):
                 self.gM4.capture(t)
         }
         a : B {self.capture("T.a");} ; // hidden by S.a
-        ''')
+        """
+        )
 
         master = textwrap.dedent(
-        r'''
+            r"""
         grammar M4;
         options {
             language=Python3;
@@ -258,20 +240,16 @@ class T(testbase.ANTLRTest):
         s : a ;
         B : 'b' ;
         WS : (' '|'\n') {self.skip()} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            master, 's',
-            slaves=[slave, slave2],
-            input="b"
-            )
+        found = self.execParser(master, "s", slaves=[slave, slave2], input="b")
 
         self.assertEqual("S.a", found)
 
-
     def testDelegatesSeeSameTokenType(self):
         slave = textwrap.dedent(
-        r'''
+            r"""
         parser grammar S5; // A, B, C token type order
         options {
             language=Python3;
@@ -282,10 +260,11 @@ class T(testbase.ANTLRTest):
                 self.gM5.capture(t)
         }
         x : A {self.capture("S.x ");} ;
-        ''')
+        """
+        )
 
         slave2 = textwrap.dedent(
-        r'''
+            r"""
         parser grammar T5;
         options {
             language=Python3;
@@ -296,10 +275,11 @@ class T(testbase.ANTLRTest):
                 self.gM5.capture(t)
         }
         y : A {self.capture("T.y");} ;
-        ''')
+        """
+        )
 
         master = textwrap.dedent(
-        r'''
+            r"""
         grammar M5;
         options {
             language=Python3;
@@ -310,20 +290,16 @@ class T(testbase.ANTLRTest):
         A : 'a' ;
         C : 'c' ;
         WS : (' '|'\n') {self.skip()} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            master, 's',
-            slaves=[slave, slave2],
-            input="aa"
-            )
+        found = self.execParser(master, "s", slaves=[slave, slave2], input="aa")
 
         self.assertEqual("S.x T.y", found)
 
-
     def testDelegatorRuleOverridesDelegate(self):
         slave = textwrap.dedent(
-        r'''
+            r"""
         parser grammar S6;
         options {
             language=Python3;
@@ -334,10 +310,11 @@ class T(testbase.ANTLRTest):
         }
         a : b {self.capture("S.a");} ;
         b : B ;
-        ''')
+        """
+        )
 
         master = textwrap.dedent(
-        r'''
+            r"""
         grammar M6;
         options {
             language=Python3;
@@ -345,22 +322,18 @@ class T(testbase.ANTLRTest):
         import S6;
         b : 'b'|'c' ;
         WS : (' '|'\n') {self.skip()} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            master, 'a',
-            slaves=[slave],
-            input="c"
-            )
+        found = self.execParser(master, "a", slaves=[slave], input="c")
 
         self.assertEqual("S.a", found)
-
 
     # LEXER INHERITANCE
 
     def testLexerDelegatorInvokesDelegateRule(self):
         slave = textwrap.dedent(
-        r'''
+            r"""
         lexer grammar S7;
         options {
             language=Python3;
@@ -371,10 +344,11 @@ class T(testbase.ANTLRTest):
         }
         A : 'a' {self.capture("S.A ");} ;
         C : 'c' ;
-        ''')
+        """
+        )
 
         master = textwrap.dedent(
-        r'''
+            r"""
         lexer grammar M7;
         options {
             language=Python3;
@@ -382,20 +356,16 @@ class T(testbase.ANTLRTest):
         import S7;
         B : 'b' ;
         WS : (' '|'\n') {self.skip()} ;
-        ''')
+        """
+        )
 
-        found = self.execLexer(
-            master,
-            slaves=[slave],
-            input="abc"
-            )
+        found = self.execLexer(master, slaves=[slave], input="abc")
 
         self.assertEqual("S.A abc", found)
 
-
     def testLexerDelegatorRuleOverridesDelegate(self):
         slave = textwrap.dedent(
-        r'''
+            r"""
         lexer grammar S8;
         options {
             language=Python3;
@@ -405,10 +375,11 @@ class T(testbase.ANTLRTest):
                 self.gM8.capture(t)
         }
         A : 'a' {self.capture("S.A")} ;
-        ''')
+        """
+        )
 
         master = textwrap.dedent(
-        r'''
+            r"""
         lexer grammar M8;
         options {
             language=Python3;
@@ -416,16 +387,13 @@ class T(testbase.ANTLRTest):
         import S8;
         A : 'a' {self.capture("M.A ");} ;
         WS : (' '|'\n') {self.skip()} ;
-        ''')
+        """
+        )
 
-        found = self.execLexer(
-            master,
-            slaves=[slave],
-            input="a"
-            )
+        found = self.execLexer(master, slaves=[slave], input="a")
 
         self.assertEqual("M.A a", found)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,12 +1,13 @@
-import antlr3
-import testbase
 import unittest
+
+import testbase
+
+import antlr3
 
 
 class t036multipleReturnValues(testbase.ANTLRTest):
     def setUp(self):
         self.compileGrammar()
-        
 
     def lexerClass(self, base):
         class TLexer(base):
@@ -15,8 +16,7 @@ class t036multipleReturnValues(testbase.ANTLRTest):
                 raise
 
         return TLexer
-    
-        
+
     def parserClass(self, base):
         class TParser(base):
             def recover(self, input, re):
@@ -24,20 +24,17 @@ class t036multipleReturnValues(testbase.ANTLRTest):
                 raise
 
         return TParser
-    
-        
+
     def testValid1(self):
-        cStream = antlr3.StringStream('   a')
+        cStream = antlr3.StringStream("   a")
 
         lexer = self.getLexer(cStream)
         tStream = antlr3.CommonTokenStream(lexer)
         parser = self.getParser(tStream)
         ret = parser.a()
-        self.assertEqual(ret.foo, 'foo')
-        self.assertEqual(ret.bar, 'bar')
+        self.assertEqual(ret.foo, "foo")
+        self.assertEqual(ret.bar, "bar")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-

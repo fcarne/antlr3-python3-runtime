@@ -1,12 +1,13 @@
-import antlr3
-import testbase
 import unittest
+
+import testbase
+
+import antlr3
 
 
 class t037rulePropertyRef(testbase.ANTLRTest):
     def setUp(self):
         self.compileGrammar()
-        
 
     def lexerClass(self, base):
         class TLexer(base):
@@ -15,8 +16,7 @@ class t037rulePropertyRef(testbase.ANTLRTest):
                 raise
 
         return TLexer
-    
-        
+
     def parserClass(self, base):
         class TParser(base):
             def recover(self, input, re):
@@ -24,10 +24,9 @@ class t037rulePropertyRef(testbase.ANTLRTest):
                 raise
 
         return TParser
-    
-        
+
     def testValid1(self):
-        cStream = antlr3.StringStream('   a a a a  ')
+        cStream = antlr3.StringStream("   a a a a  ")
 
         lexer = self.getLexer(cStream)
         tStream = antlr3.CommonTokenStream(lexer)
@@ -36,12 +35,12 @@ class t037rulePropertyRef(testbase.ANTLRTest):
 
         # first token of rule b is the 2nd token (counting hidden tokens)
         self.assertEqual(start.index, 1, start)
-        
+
         # first token of rule b is the 7th token (counting hidden tokens)
         self.assertEqual(stop.index, 7, stop)
 
         self.assertEqual(text, "a a a a")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

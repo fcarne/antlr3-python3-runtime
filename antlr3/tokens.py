@@ -38,7 +38,8 @@ from .constants import DEFAULT_CHANNEL, EOF, INVALID_TOKEN_TYPE
 #
 ############################################################################
 
-class Token(object):
+
+class Token:
     """@brief Abstract token baseclass."""
 
     TOKEN_NAMES_MAP = None
@@ -46,15 +47,23 @@ class Token(object):
     @classmethod
     def registerTokenNamesMap(cls, tokenNamesMap):
         """@brief Store a mapping from token type to token name.
-        
+
         This enables token.typeName to give something more meaningful
         than, e.g., '6'.
         """
         cls.TOKEN_NAMES_MAP = tokenNamesMap
         cls.TOKEN_NAMES_MAP[EOF] = "EOF"
 
-    def __init__(self, type=None, channel=DEFAULT_CHANNEL, text=None,
-                 index=-1, line=0, charPositionInLine=-1, input=None):
+    def __init__(
+        self,
+        type=None,
+        channel=DEFAULT_CHANNEL,
+        text=None,
+        index=-1,
+        line=0,
+        charPositionInLine=-1,
+        input=None,
+    ):
         # We use -1 for index and charPositionInLine as an invalid index
         self._type = type
         self._channel = channel
@@ -72,7 +81,6 @@ class Token(object):
     @text.setter
     def text(self, value):
         self._text = value
-
 
     @property
     def type(self):
@@ -92,7 +100,7 @@ class Token(object):
             return self.TOKEN_NAMES_MAP.get(self._type, "INVALID_TOKEN_TYPE")
         else:
             return str(self._type)
-    
+
     @property
     def line(self):
         """Lines are numbered 1..n."""
@@ -101,7 +109,6 @@ class Token(object):
     @line.setter
     def line(self, value):
         self._line = value
-
 
     @property
     def charPositionInLine(self):
@@ -112,7 +119,6 @@ class Token(object):
     def charPositionInLine(self, pos):
         self._charPositionInLine = pos
 
-
     @property
     def channel(self):
         return self._channel
@@ -120,7 +126,6 @@ class Token(object):
     @channel.setter
     def channel(self, value):
         self._channel = value
-
 
     @property
     def index(self):
@@ -165,6 +170,7 @@ class Token(object):
 #
 ############################################################################
 
+
 class CommonToken(Token):
     """@brief Basic token implementation.
 
@@ -174,13 +180,26 @@ class CommonToken(Token):
 
     """
 
-    def __init__(self, type=None, channel=DEFAULT_CHANNEL, text=None,
-                 input=None, start=None, stop=None, oldToken=None):
-
+    def __init__(
+        self,
+        type=None,
+        channel=DEFAULT_CHANNEL,
+        text=None,
+        input=None,
+        start=None,
+        stop=None,
+        oldToken=None,
+    ):
         if oldToken:
-            super().__init__(oldToken.type, oldToken.channel, oldToken.text,
-                             oldToken.index, oldToken.line,
-                             oldToken.charPositionInLine, oldToken.input)
+            super().__init__(
+                oldToken.type,
+                oldToken.channel,
+                oldToken.text,
+                oldToken.index,
+                oldToken.line,
+                oldToken.charPositionInLine,
+                oldToken.input,
+            )
             if isinstance(oldToken, CommonToken):
                 self.start = oldToken.start
                 self.stop = oldToken.stop
@@ -203,7 +222,6 @@ class CommonToken(Token):
             # This is the index of the last char, *not* the index after it!
             self.stop = stop
 
-
     @property
     def text(self):
         # Could be the empty string, and we want to return that.
@@ -216,7 +234,7 @@ class CommonToken(Token):
         if self.start < self.input.size() and self.stop < self.input.size():
             return self.input.substring(self.start, self.stop)
 
-        return '<EOF>'
+        return "<EOF>"
 
     @text.setter
     def text(self, value):
@@ -228,13 +246,11 @@ class CommonToken(Token):
         """
         self._text = value
 
-
     def getInputStream(self):
         return self.input
 
     def setInputStream(self, input):
         self.input = input
-
 
     def __str__(self):
         if self.type == EOF:
@@ -253,10 +269,13 @@ class CommonToken(Token):
         else:
             txt = "<no text>"
 
-        return ("[@{0.index},{0.start}:{0.stop}={txt!r},"
-                "<{0.typeName}>{channelStr},"
-                "{0.line}:{0.charPositionInLine}]"
-                .format(self, txt=txt, channelStr=channelStr))
+        return (
+            "[@{0.index},{0.start}:{0.stop}={txt!r},"
+            "<{0.typeName}>{channelStr},"
+            "{0.line}:{0.charPositionInLine}]".format(
+                self, txt=txt, channelStr=channelStr
+            )
+        )
 
 
 class ClassicToken(Token):
@@ -270,24 +289,31 @@ class ClassicToken(Token):
     new strings.
     """
 
-    def __init__(self, type=None, text=None, channel=DEFAULT_CHANNEL,
-                 oldToken=None):
+    def __init__(self, type=None, text=None, channel=DEFAULT_CHANNEL, oldToken=None):
         if oldToken:
-            super().__init__(type=oldToken.type, channel=oldToken.channel,
-                             text=oldToken.text, line=oldToken.line,
-                             charPositionInLine=oldToken.charPositionInLine)
+            super().__init__(
+                type=oldToken.type,
+                channel=oldToken.channel,
+                text=oldToken.text,
+                line=oldToken.line,
+                charPositionInLine=oldToken.charPositionInLine,
+            )
 
         else:
-            super().__init__(type=type, channel=channel, text=text,
-                             index=None, line=None, charPositionInLine=None)
-
+            super().__init__(
+                type=type,
+                channel=channel,
+                text=text,
+                index=None,
+                line=None,
+                charPositionInLine=None,
+            )
 
     def getInputStream(self):
         return None
 
     def setInputStream(self, input):
         pass
-
 
     def toString(self):
         channelStr = ""
@@ -298,9 +324,12 @@ class ClassicToken(Token):
         if not txt:
             txt = "<no text>"
 
-        return ("[@{0.index!r},{txt!r},<{0.type!r}>{channelStr},"
-                "{0.line!r}:{0.charPositionInLine!r}]"
-                .format(self, txt=txt, channelStr=channelStr))
+        return (
+            "[@{0.index!r},{txt!r},<{0.type!r}>{channelStr},"
+            "{0.line!r}:{0.charPositionInLine!r}]".format(
+                self, txt=txt, channelStr=channelStr
+            )
+        )
 
     __str__ = toString
     __repr__ = toString

@@ -1,14 +1,17 @@
-import unittest
 import textwrap
-import antlr3
+import unittest
+
 import testbase
+
+import antlr3
+
 
 class T(testbase.ANTLRTest):
     def testRewrite(self):
         self.compileGrammar()
 
         input = textwrap.dedent(
-            '''\
+            """\
             method foo() {
               i = 3;
               k = i;
@@ -18,15 +21,17 @@ class T(testbase.ANTLRTest):
             method bar() {
               j = i*2;
             }
-            ''')
-        
+            """
+        )
+
         cStream = antlr3.StringStream(input)
         lexer = self.getLexer(cStream)
         tStream = antlr3.TokenRewriteStream(lexer)
         parser = self.getParser(tStream)
         parser.program()
 
-        expectedOutput = textwrap.dedent('''\
+        expectedOutput = textwrap.dedent(
+            """\
         public class Wrapper {
         public void foo() {
         int k;
@@ -42,11 +47,11 @@ class T(testbase.ANTLRTest):
         }
         }
 
-        ''')
+        """
+        )
 
         self.assertEqual(str(tStream), expectedOutput)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-

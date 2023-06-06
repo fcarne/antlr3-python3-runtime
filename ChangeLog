@@ -55,4 +55,3 @@
 	Minor improvement of generated code (use '<lower> <= <LA> <= <upper>'
 	instead of '<LA> >= <lower> and <LA> <= <upper>').
 	
-

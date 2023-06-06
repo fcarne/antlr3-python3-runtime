@@ -31,20 +31,23 @@
 # end[licence]
 
 
-import sys
 import argparse
+import sys
 
-from .streams import ANTLRStringStream, ANTLRFileStream, \
-     ANTLRInputStream, CommonTokenStream
+from .streams import (
+    ANTLRFileStream,
+    ANTLRInputStream,
+    ANTLRStringStream,
+    CommonTokenStream,
+)
 from .tree import CommonTreeNodeStream
 
 
-class _Main(object):
+class _Main:
     def __init__(self):
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
-
 
     def parseArgs(self, argv):
         argParser = argparse.ArgumentParser()
@@ -54,17 +57,15 @@ class _Main(object):
         argParser.add_argument("--profile", action="store_true")
         argParser.add_argument("--hotshot", action="store_true")
         argParser.add_argument("--port", type=int)
-        argParser.add_argument("--debug-socket", action='store_true')
-        argParser.add_argument("file", nargs='?')
+        argParser.add_argument("--debug-socket", action="store_true")
+        argParser.add_argument("file", nargs="?")
 
         self.setupArgs(argParser)
 
         return argParser.parse_args(argv[1:])
 
-
     def setupArgs(self, argParser):
         pass
-
 
     def execute(self, argv):
         args = self.parseArgs(argv)
@@ -86,7 +87,7 @@ class _Main(object):
             if args.input:
                 inStream = ANTLRStringStream(args.input)
 
-            elif args.file and args.file != '-':
+            elif args.file and args.file != "-":
                 inStream = ANTLRFileStream(args.file)
 
             else:
@@ -99,47 +100,40 @@ class _Main(object):
                     import profile
 
                 profile.runctx(
-                    'self.parseStream(args, inStream)',
+                    "self.parseStream(args, inStream)",
                     globals(),
                     locals(),
-                    'profile.dat'
-                    )
+                    "profile.dat",
+                )
 
                 import pstats
-                stats = pstats.Stats('profile.dat')
+
+                stats = pstats.Stats("profile.dat")
                 stats.strip_dirs()
-                stats.sort_stats('time')
+                stats.sort_stats("time")
                 stats.print_stats(100)
 
             elif args.hotshot:
                 import hotshot
 
-                profiler = hotshot.Profile('hotshot.dat')
-                profiler.runctx(
-                    'self.parseStream(args, inStream)',
-                    globals(),
-                    locals()
-                    )
+                profiler = hotshot.Profile("hotshot.dat")
+                profiler.runctx("self.parseStream(args, inStream)", globals(), locals())
 
             else:
                 self.parseStream(args, inStream)
 
-
     def setUp(self, args):
         pass
 
-
     def parseStream(self, args, inStream):
         raise NotImplementedError
-
 
     def write(self, args, text):
         if not args.no_output:
             self.stdout.write(text)
 
-
     def writeln(self, args, text):
-        self.write(args, text + '\n')
+        self.write(args, text + "\n")
 
 
 class LexerMain(_Main):
@@ -147,7 +141,6 @@ class LexerMain(_Main):
         super().__init__()
 
         self.lexerClass = lexerClass
-
 
     def parseStream(self, args, inStream):
         lexer = self.lexerClass(inStream)
@@ -163,31 +156,29 @@ class ParserMain(_Main):
         self.lexerClass = None
         self.parserClass = parserClass
 
-
     def setupArgs(self, argParser):
-        argParser.add_argument("--lexer", dest="lexerClass",
-                               default=self.lexerClassName)
+        argParser.add_argument(
+            "--lexer", dest="lexerClass", default=self.lexerClassName
+        )
         argParser.add_argument("--rule", dest="parserRule")
-
 
     def setUp(self, args):
         lexerMod = __import__(args.lexerClass)
         self.lexerClass = getattr(lexerMod, args.lexerClass)
 
-
     def parseStream(self, args, inStream):
         kwargs = {}
         if args.port is not None:
-            kwargs['port'] = args.port
+            kwargs["port"] = args.port
         if args.debug_socket:
-            kwargs['debug_socket'] = sys.stderr
+            kwargs["debug_socket"] = sys.stderr
 
         lexer = self.lexerClass(inStream)
         tokenStream = CommonTokenStream(lexer)
         parser = self.parserClass(tokenStream, **kwargs)
         result = getattr(parser, args.parserRule)()
         if result:
-            if hasattr(result, 'tree') and result.tree:
+            if hasattr(result, "tree") and result.tree:
                 self.writeln(args, result.tree.toStringTree())
             else:
                 self.writeln(args, repr(result))
@@ -201,13 +192,11 @@ class WalkerMain(_Main):
         self.parserClass = None
         self.walkerClass = walkerClass
 
-
     def setupArgs(self, argParser):
         argParser.add_argument("--lexer", dest="lexerClass")
         argParser.add_argument("--parser", dest="parserClass")
         argParser.add_argument("--parser-rule", dest="parserRule")
         argParser.add_argument("--rule", dest="walkerRule")
-
 
     def setUp(self, args):
         lexerMod = __import__(args.lexerClass)
@@ -215,20 +204,19 @@ class WalkerMain(_Main):
         parserMod = __import__(args.parserClass)
         self.parserClass = getattr(parserMod, args.parserClass)
 
-
     def parseStream(self, args, inStream):
         lexer = self.lexerClass(inStream)
         tokenStream = CommonTokenStream(lexer)
         parser = self.parserClass(tokenStream)
         result = getattr(parser, args.parserRule)()
         if result:
-            assert hasattr(result, 'tree'), "Parser did not return an AST"
+            assert hasattr(result, "tree"), "Parser did not return an AST"
             nodeStream = CommonTreeNodeStream(result.tree)
             nodeStream.setTokenStream(tokenStream)
             walker = self.walkerClass(nodeStream)
             result = getattr(walker, args.walkerRule)()
             if result:
-                if hasattr(result, 'tree'):
+                if hasattr(result, "tree"):
                     self.writeln(args, result.tree.toStringTree())
                 else:
                     self.writeln(args, repr(result))

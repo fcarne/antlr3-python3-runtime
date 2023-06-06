@@ -1,4 +1,3 @@
-import sys
 import unittest
 
 import antlr3
@@ -11,20 +10,16 @@ class TestBaseRecognizer(unittest.TestCase):
         """BaseRecognizer._getRuleInvocationStack()"""
 
         rules = antlr3.BaseRecognizer._getRuleInvocationStack(__name__)
-        self.assertEqual(
-            rules,
-            ['testGetRuleInvocationStack']
-            )
+        self.assertEqual(rules, ["testGetRuleInvocationStack"])
 
 
 class TestTokenSource(unittest.TestCase):
     """Testcase to the antlr3.TokenSource class"""
 
-
     def testIteratorInterface(self):
         """TokenSource.next()"""
 
-        class TrivialToken(object):
+        class TrivialToken:
             def __init__(self, type):
                 self.type = type
 
@@ -36,11 +31,10 @@ class TestTokenSource(unittest.TestCase):
                     TrivialToken(3),
                     TrivialToken(4),
                     TrivialToken(antlr3.EOF),
-                    ]
+                ]
 
             def nextToken(self):
                 return self.tokens.pop(0)
-
 
         src = TestSource()
         tokens = []
@@ -50,16 +44,14 @@ class TestTokenSource(unittest.TestCase):
         self.assertEqual(tokens, [1, 2, 3, 4])
 
 
-
 class TestLexer(unittest.TestCase):
-
     def testInit(self):
         """Lexer.__init__()"""
 
         class TLexer(antlr3.Lexer):
-            api_version = 'HEAD'
+            api_version = "HEAD"
 
-        stream = antlr3.StringStream('foo')
+        stream = antlr3.StringStream("foo")
         TLexer(stream)
 
 

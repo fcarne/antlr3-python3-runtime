@@ -1,12 +1,13 @@
-import antlr3
-import testbase
 import unittest
+
+import testbase
+
+import antlr3
 
 
 class t038lexerRuleLabel(testbase.ANTLRTest):
     def setUp(self):
         self.compileGrammar()
-        
 
     def lexerClass(self, base):
         class TLexer(base):
@@ -15,10 +16,9 @@ class t038lexerRuleLabel(testbase.ANTLRTest):
                 raise
 
         return TLexer
-    
-        
+
     def testValid1(self):
-        cStream = antlr3.StringStream('a  2')
+        cStream = antlr3.StringStream("a  2")
 
         lexer = self.getLexer(cStream)
 
@@ -29,5 +29,5 @@ class t038lexerRuleLabel(testbase.ANTLRTest):
             print(t)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

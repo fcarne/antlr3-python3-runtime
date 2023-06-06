@@ -6,4 +6,3 @@ options {
 A: 'a';
 B: 'b';
 C: 'c';
-

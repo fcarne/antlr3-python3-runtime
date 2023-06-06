@@ -1,9 +1,11 @@
-import unittest
 import textwrap
+import unittest
+
+import testbase
+
 import antlr3
 import antlr3.tree
-import testbase
-import sys
+
 
 class T(testbase.ANTLRTest):
     def parserClass(self, base):
@@ -13,25 +15,20 @@ class T(testbase.ANTLRTest):
 
                 self._output = ""
 
-
             def capture(self, t):
                 self._output += t
 
-
             def traceIn(self, ruleName, ruleIndex):
-                self.traces.append('>'+ruleName)
-
+                self.traces.append(">" + ruleName)
 
             def traceOut(self, ruleName, ruleIndex):
-                self.traces.append('<'+ruleName)
-
+                self.traces.append("<" + ruleName)
 
             def recover(self, input, re):
                 # no error recovery yet, just crash!
                 raise
 
         return TParser
-
 
     def lexerClass(self, base):
         class TLexer(base):
@@ -40,25 +37,20 @@ class T(testbase.ANTLRTest):
 
                 self._output = ""
 
-
             def capture(self, t):
                 self._output += t
 
-
             def traceIn(self, ruleName, ruleIndex):
-                self.traces.append('>'+ruleName)
-
+                self.traces.append(">" + ruleName)
 
             def traceOut(self, ruleName, ruleIndex):
-                self.traces.append('<'+ruleName)
-
+                self.traces.append("<" + ruleName)
 
             def recover(self, input, re):
                 # no error recovery yet, just crash!
                 raise
 
         return TLexer
-
 
     def execParser(self, grammar, grammarEntry, input):
         lexerCls, parserCls = self.compileInlineGrammar(grammar)
@@ -73,7 +65,6 @@ class T(testbase.ANTLRTest):
             return r.tree.toStringTree()
 
         return ""
-
 
     def execTreeParser(self, grammar, grammarEntry, treeGrammar, treeEntry, input):
         lexerCls, parserCls = self.compileInlineGrammar(grammar)
@@ -94,12 +85,11 @@ class T(testbase.ANTLRTest):
 
         return ""
 
-
     # PARSERS -- AUTO AST
 
     def testToken(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T1;
         options {
             language=Python3;
@@ -115,19 +105,16 @@ class T(testbase.ANTLRTest):
         a : ID<V> ;
         ID : 'a'..'z'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a"
-            )
+        found = self.execParser(grammar, "a", input="a")
 
         self.assertEqual("a<V>", found)
 
-
     def testTokenCommonTree(self):
         grammar = textwrap.dedent(
-            r'''
+            r"""
             grammar T;
             options {
                 language=Python3;
@@ -136,18 +123,16 @@ class T(testbase.ANTLRTest):
             a : ID<CommonTree> ;
             ID : 'a'..'z'+ ;
             WS : (' '|'\n') {$channel=HIDDEN;} ;
-            ''')
+            """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a")
+        found = self.execParser(grammar, "a", input="a")
 
         self.assertEqual("a", found)
 
-
     def testTokenWithQualifiedType(self):
         grammar = textwrap.dedent(
-            r'''
+            r"""
             grammar T;
             options {
                 language=Python3;
@@ -162,15 +147,12 @@ class T(testbase.ANTLRTest):
             a : ID<TParser.V> ; // TParser.V is qualified name
             ID : 'a'..'z'+ ;
             WS : (' '|'\n') {$channel=HIDDEN;} ;
-            ''')
+            """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a"
-            )
+        found = self.execParser(grammar, "a", input="a")
 
         self.assertEqual("a<V>", found)
-
 
     def testNamedType(self):
         grammar = textwrap.dedent(
@@ -189,15 +171,15 @@ class T(testbase.ANTLRTest):
             a : ID<node=V> ;
             ID : 'a'..'z'+ ;
             WS : (' '|'\\n') {$channel=HIDDEN;} ;
-            """)
+            """
+        )
 
-        found = self.execParser(grammar, 'a', input="a")
+        found = self.execParser(grammar, "a", input="a")
         self.assertEqual("a<V>", found)
-
 
     def testTokenWithLabel(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T2;
         options {
             language=Python3;
@@ -213,19 +195,16 @@ class T(testbase.ANTLRTest):
         a : x=ID<V> ;
         ID : 'a'..'z'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a"
-            )
+        found = self.execParser(grammar, "a", input="a")
 
         self.assertEqual("a<V>", found)
 
-
     def testTokenWithListLabel(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T3;
         options {
             language=Python3;
@@ -241,19 +220,16 @@ class T(testbase.ANTLRTest):
         a : x+=ID<V> ;
         ID : 'a'..'z'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a"
-            )
+        found = self.execParser(grammar, "a", input="a")
 
         self.assertEqual("a<V>", found)
 
-
     def testTokenRoot(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T4;
         options {
             language=Python3;
@@ -269,19 +245,16 @@ class T(testbase.ANTLRTest):
         a : ID<V>^ ;
         ID : 'a'..'z'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a"
-            )
+        found = self.execParser(grammar, "a", input="a")
 
         self.assertEqual("a<V>", found)
 
-
     def testTokenRootWithListLabel(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T5;
         options {
             language=Python3;
@@ -297,19 +270,16 @@ class T(testbase.ANTLRTest):
         a : x+=ID<V>^ ;
         ID : 'a'..'z'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a"
-            )
+        found = self.execParser(grammar, "a", input="a")
 
         self.assertEqual("a<V>", found)
 
-
     def testString(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T6;
         options {
             language=Python3;
@@ -325,19 +295,16 @@ class T(testbase.ANTLRTest):
         a : 'begin'<V> ;
         ID : 'a'..'z'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="begin"
-            )
+        found = self.execParser(grammar, "a", input="begin")
 
         self.assertEqual("begin<V>", found)
 
-
     def testStringRoot(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T7;
         options {
             language=Python3;
@@ -353,21 +320,18 @@ class T(testbase.ANTLRTest):
         a : 'begin'<V>^ ;
         ID : 'a'..'z'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="begin"
-            )
+        found = self.execParser(grammar, "a", input="begin")
 
         self.assertEqual("begin<V>", found)
-
 
     # PARSERS -- REWRITE AST
 
     def testRewriteToken(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T8;
         options {
             language=Python3;
@@ -383,19 +347,16 @@ class T(testbase.ANTLRTest):
         a : ID -> ID<V> ;
         ID : 'a'..'z'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a"
-            )
+        found = self.execParser(grammar, "a", input="a")
 
         self.assertEqual("a<V>", found)
 
-
     def testRewriteTokenWithArgs(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T9;
         options {
             language=Python3;
@@ -437,19 +398,16 @@ class T(testbase.ANTLRTest):
         a : ID -> ID<V>[42,19,30] ID<V>[$ID,99];
         ID : 'a'..'z'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a"
-            )
+        found = self.execParser(grammar, "a", input="a")
 
         self.assertEqual("<V>;421930 a<V>;9900", found)
 
-
     def testRewriteTokenRoot(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T10;
         options {
             language=Python3;
@@ -466,19 +424,16 @@ class T(testbase.ANTLRTest):
         ID : 'a'..'z'+ ;
         INT : '0'..'9'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a 2"
-            )
+        found = self.execParser(grammar, "a", input="a 2")
 
         self.assertEqual("(a<V> 2)", found)
 
-
     def testRewriteString(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T11;
         options {
             language=Python3;
@@ -494,19 +449,16 @@ class T(testbase.ANTLRTest):
         a : 'begin' -> 'begin'<V> ;
         ID : 'a'..'z'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="begin"
-            )
+        found = self.execParser(grammar, "a", input="begin")
 
         self.assertEqual("begin<V>", found)
 
-
     def testRewriteStringRoot(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T12;
         options {
             language=Python3;
@@ -523,18 +475,16 @@ class T(testbase.ANTLRTest):
         ID : 'a'..'z'+ ;
         INT : '0'..'9'+ ;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="begin 2"
-            )
+        found = self.execParser(grammar, "a", input="begin 2")
 
         self.assertEqual("(begin<V> 2)", found)
 
     def testRewriteRuleResults(self):
         grammar = textwrap.dedent(
-            r'''
+            r"""
             grammar T;
             options {
                 language=Python3;
@@ -561,17 +511,16 @@ class T(testbase.ANTLRTest):
             id : ID -> ID<V>;
             ID : 'a'..'z'+ ;
             WS : (' '|'\n') {$channel=HIDDEN;} ;
-            ''')
+            """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="a,b,c")
+        found = self.execParser(grammar, "a", input="a,b,c")
 
         self.assertEqual("(LIST<W> a<V> b<V> c<V>)", found)
 
     def testCopySemanticsWithHetero(self):
         grammar = textwrap.dedent(
-            r'''
+            r"""
             grammar T;
             options {
                 language=Python3;
@@ -592,18 +541,17 @@ class T(testbase.ANTLRTest):
             ID : 'a'..'z'+ ;
             INT : '0'..'9'+;
             WS : (' '|'\\n') {$channel=HIDDEN;} ;
-            ''')
+            """
+        )
 
-        found = self.execParser(
-            grammar, 'a',
-            input="int a, b, c;")
+        found = self.execParser(grammar, "a", input="int a, b, c;")
         self.assertEqual("(int<V> a) (int<V> b) (int<V> c)", found)
 
     # TREE PARSERS -- REWRITE AST
 
     def testTreeParserRewriteFlatList(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T13;
         options {
             language=Python3;
@@ -613,10 +561,11 @@ class T(testbase.ANTLRTest):
         ID : 'a'..'z'+ ;
         INT : '0'..'9'+;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
         treeGrammar = textwrap.dedent(
-        r'''
+            r"""
         tree grammar TP13;
         options {
             language=Python3;
@@ -638,20 +587,16 @@ class T(testbase.ANTLRTest):
         }
         a : ID INT -> INT<V> ID<W>
           ;
-        ''')
+        """
+        )
 
-        found = self.execTreeParser(
-            grammar, 'a',
-            treeGrammar, 'a',
-            input="abc 34"
-            )
+        found = self.execTreeParser(grammar, "a", treeGrammar, "a", input="abc 34")
 
         self.assertEqual("34<V> abc<W>", found)
 
-
     def testTreeParserRewriteTree(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T14;
         options {
             language=Python3;
@@ -661,10 +606,11 @@ class T(testbase.ANTLRTest):
         ID : 'a'..'z'+ ;
         INT : '0'..'9'+;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
         treeGrammar = textwrap.dedent(
-        r'''
+            r"""
         tree grammar TP14;
         options {
             language=Python3;
@@ -686,20 +632,16 @@ class T(testbase.ANTLRTest):
         }
         a : ID INT -> ^(INT<V> ID<W>)
           ;
-        ''')
+        """
+        )
 
-        found = self.execTreeParser(
-            grammar, 'a',
-            treeGrammar, 'a',
-            input="abc 34"
-            )
+        found = self.execTreeParser(grammar, "a", treeGrammar, "a", input="abc 34")
 
         self.assertEqual("(34<V> abc<W>)", found)
 
-
     def testTreeParserRewriteImaginary(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T15;
         options {
             language=Python3;
@@ -709,10 +651,11 @@ class T(testbase.ANTLRTest):
         ID : 'a'..'z'+ ;
         INT : '0'..'9'+;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
         treeGrammar = textwrap.dedent(
-        r'''
+            r"""
         tree grammar TP15;
         options {
             language=Python3;
@@ -734,20 +677,16 @@ class T(testbase.ANTLRTest):
         }
         a : ID -> ROOT<V> ID
           ;
-        ''')
+        """
+        )
 
-        found = self.execTreeParser(
-            grammar, 'a',
-            treeGrammar, 'a',
-            input="abc"
-            )
+        found = self.execTreeParser(grammar, "a", treeGrammar, "a", input="abc")
 
         self.assertEqual("ROOT<V> abc", found)
 
-
     def testTreeParserRewriteImaginaryWithArgs(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T16;
         options {
             language=Python3;
@@ -757,10 +696,11 @@ class T(testbase.ANTLRTest):
         ID : 'a'..'z'+ ;
         INT : '0'..'9'+;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
         treeGrammar = textwrap.dedent(
-        r'''
+            r"""
         tree grammar TP16;
         options {
             language=Python3;
@@ -782,20 +722,16 @@ class T(testbase.ANTLRTest):
         }
         a : ID -> ROOT<V>[42] ID
           ;
-        ''')
+        """
+        )
 
-        found = self.execTreeParser(
-            grammar, 'a',
-            treeGrammar, 'a',
-            input="abc"
-            )
+        found = self.execTreeParser(grammar, "a", treeGrammar, "a", input="abc")
 
         self.assertEqual("ROOT<V>;42 abc", found)
 
-
     def testTreeParserRewriteImaginaryRoot(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T17;
         options {
             language=Python3;
@@ -805,10 +741,11 @@ class T(testbase.ANTLRTest):
         ID : 'a'..'z'+ ;
         INT : '0'..'9'+;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
         treeGrammar = textwrap.dedent(
-        r'''
+            r"""
         tree grammar TP17;
         options {
             language=Python3;
@@ -829,20 +766,16 @@ class T(testbase.ANTLRTest):
         }
         a : ID -> ^(ROOT<V> ID)
           ;
-        ''')
+        """
+        )
 
-        found = self.execTreeParser(
-            grammar, 'a',
-            treeGrammar, 'a',
-            input="abc"
-            )
+        found = self.execTreeParser(grammar, "a", treeGrammar, "a", input="abc")
 
         self.assertEqual("(ROOT<V> abc)", found)
 
-
     def testTreeParserRewriteImaginaryFromReal(self):
         grammar = textwrap.dedent(
-        r'''
+            r"""
         grammar T18;
         options {
             language=Python3;
@@ -852,10 +785,11 @@ class T(testbase.ANTLRTest):
         ID : 'a'..'z'+ ;
         INT : '0'..'9'+;
         WS : (' '|'\n') {$channel=HIDDEN;} ;
-        ''')
+        """
+        )
 
         treeGrammar = textwrap.dedent(
-        r'''
+            r"""
         tree grammar TP18;
         options {
             language=Python3;
@@ -880,20 +814,16 @@ class T(testbase.ANTLRTest):
         }
         a : ID -> ROOT<V>[$ID]
           ;
-        ''')
+        """
+        )
 
-        found = self.execTreeParser(
-            grammar, 'a',
-            treeGrammar, 'a',
-            input="abc"
-            )
+        found = self.execTreeParser(grammar, "a", treeGrammar, "a", input="abc")
 
         self.assertEqual("ROOT<V>@1", found)
 
-
     def testTreeParserAutoHeteroAST(self):
         grammar = textwrap.dedent(
-            r'''
+            r"""
             grammar T;
             options {
                 language=Python3;
@@ -903,10 +833,11 @@ class T(testbase.ANTLRTest):
             ID : 'a'..'z'+ ;
             INT : '0'..'9'+;
             WS : (' '|'\n') {$channel=HIDDEN;} ;
-            ''')
+            """
+        )
 
         treeGrammar = textwrap.dedent(
-            r'''
+            r"""
             tree grammar TP;
             options {
                 language=Python3;
@@ -924,16 +855,13 @@ class T(testbase.ANTLRTest):
             }
 
             a : ID<V> ';'<V>;
-            ''')
+            """
+        )
 
-        found = self.execTreeParser(
-            grammar, 'a',
-            treeGrammar, 'a',
-            input="abc;"
-            )
+        found = self.execTreeParser(grammar, "a", treeGrammar, "a", input="abc;")
 
         self.assertEqual("abc<V> ;<V>", found)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,9 +1,4 @@
 import unittest
-import re
-import textwrap
-import antlr3
-import testbase
-
 
 # Left-recursion resolution is not yet enabled in the tool.
 
@@ -464,5 +459,5 @@ import testbase
 #         self.runTests(grammar, tests, "s")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

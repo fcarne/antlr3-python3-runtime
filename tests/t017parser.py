@@ -1,24 +1,25 @@
-import antlr3
-import testbase
 import unittest
+
+import testbase
+
+import antlr3
+
 
 class t017parser(testbase.ANTLRTest):
     def setUp(self):
         self.compileGrammar()
-        
+
     def parserClass(self, base):
         class TestParser(base):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
 
                 self.reportedErrors = []
-        
 
             def emitErrorMessage(self, msg):
                 self.reportedErrors.append(msg)
-                
-        return TestParser
 
+        return TestParser
 
     def testValid(self):
         cStream = antlr3.StringStream("int foo;")
@@ -29,9 +30,8 @@ class t017parser(testbase.ANTLRTest):
 
         self.assertEqual(parser.reportedErrors, [])
 
-
     def testMalformedInput1(self):
-        cStream = antlr3.StringStream('int foo() { 1+2 }')
+        cStream = antlr3.StringStream("int foo() { 1+2 }")
         lexer = self.getLexer(cStream)
         tStream = antlr3.CommonTokenStream(lexer)
         parser = self.getParser(tStream)
@@ -41,9 +41,8 @@ class t017parser(testbase.ANTLRTest):
         # can't check error locations yet
         self.assertEqual(len(parser.reportedErrors), 1, parser.reportedErrors)
 
-
     def testMalformedInput2(self):
-        cStream = antlr3.StringStream('int foo() { 1+; 1+2 }')
+        cStream = antlr3.StringStream("int foo() { 1+; 1+2 }")
         lexer = self.getLexer(cStream)
         tStream = antlr3.CommonTokenStream(lexer)
         parser = self.getParser(tStream)
@@ -54,5 +53,5 @@ class t017parser(testbase.ANTLRTest):
         self.assertEqual(len(parser.reportedErrors), 2, parser.reportedErrors)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

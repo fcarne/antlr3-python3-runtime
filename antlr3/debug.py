@@ -30,12 +30,14 @@
 
 import socket
 import sys
+
 from .constants import INVALID_TOKEN_TYPE
 from .exceptions import RecognitionException
 from .recognizers import Parser
 from .streams import TokenStream
 from .tokens import Token
-from .tree import CommonTreeAdaptor, TreeAdaptor, Tree
+from .tree import CommonTreeAdaptor, Tree, TreeAdaptor
+
 
 class DebugParser(Parser):
     def __init__(self, stream, state=None, dbg=None, *args, **kwargs):
@@ -50,13 +52,12 @@ class DebugParser(Parser):
 
         self.setDebugListener(dbg)
 
-
     def setDebugListener(self, dbg):
         """Provide a new debug event listener for this parser.  Notify the
         input stream too that it should send events to this listener.
         """
 
-        if hasattr(self.input, 'dbg'):
+        if hasattr(self.input, "dbg"):
             self.input.dbg = dbg
 
         self._dbg = dbg
@@ -66,22 +67,17 @@ class DebugParser(Parser):
 
     dbg = property(getDebugListener, setDebugListener)
 
-
     def beginResync(self):
         self._dbg.beginResync()
-
 
     def endResync(self):
         self._dbg.endResync()
 
-
     def beginBacktrack(self, level):
         self._dbg.beginBacktrack(level)
 
-
     def endBacktrack(self, level, successful):
         self._dbg.endBacktrack(level, successful)
-
 
     def reportError(self, exc):
         Parser.reportError(self, exc)
@@ -105,7 +101,6 @@ class DebugTokenStream(TokenStream):
         # so we know if there are any hidden tokens first in the stream
         self.input.LT(1)
 
-
     def getDebugListener(self):
         return self._dbg
 
@@ -113,7 +108,6 @@ class DebugTokenStream(TokenStream):
         self._dbg = dbg
 
     dbg = property(getDebugListener, setDebugListener)
-
 
     def consume(self):
         if self.initialStreamState:
@@ -130,7 +124,6 @@ class DebugTokenStream(TokenStream):
             for idx in range(a + 1, b):
                 self._dbg.consumeHiddenToken(self.input.get(idx))
 
-
     def consumeInitialHiddenTokens(self):
         """consume all initial off-channel tokens"""
 
@@ -140,7 +133,6 @@ class DebugTokenStream(TokenStream):
 
         self.initialStreamState = False
 
-
     def LT(self, i):
         if self.initialStreamState:
             self.consumeInitialHiddenTokens()
@@ -148,7 +140,6 @@ class DebugTokenStream(TokenStream):
         t = self.input.LT(i)
         self._dbg.LT(i, t)
         return t
-
 
     def LA(self, i):
         if self.initialStreamState:
@@ -158,47 +149,37 @@ class DebugTokenStream(TokenStream):
         self._dbg.LT(i, t)
         return t.type
 
-
     def get(self, i):
         return self.input.get(i)
 
-
     def index(self):
         return self.input.index()
-
 
     def mark(self):
         self.lastMarker = self.input.mark()
         self._dbg.mark(self.lastMarker)
         return self.lastMarker
 
-
     def rewind(self, marker=None):
         self._dbg.rewind(marker)
         self.input.rewind(marker)
 
-
     def release(self, marker):
         pass
-
 
     def seek(self, index):
         # TODO: implement seek in dbg interface
         # self._dbg.seek(index);
         self.input.seek(index)
 
-
     def size(self):
         return self.input.size()
-
 
     def getTokenSource(self):
         return self.input.getTokenSource()
 
-
     def getSourceName(self):
         return self.getTokenSource().getSourceName()
-
 
     def toString(self, start=None, stop=None):
         return self.input.toString(start, stop)
@@ -223,7 +204,6 @@ class DebugTreeAdaptor(TreeAdaptor):
         self.dbg = dbg
         self.adaptor = adaptor
 
-
     def createWithPayload(self, payload):
         if payload.index < 0:
             # could be token conjured up during error recovery
@@ -243,14 +223,12 @@ class DebugTreeAdaptor(TreeAdaptor):
         self.dbg.createNode(node)
         return node
 
-
     def errorNode(self, input, start, stop, exc):
         node = self.adaptor.errorNode(input, start, stop, exc)
         if node is not None:
             self.dbg.errorNode(node)
 
         return node
-
 
     def dupTree(self, tree):
         t = self.adaptor.dupTree(tree)
@@ -260,7 +238,6 @@ class DebugTreeAdaptor(TreeAdaptor):
         self.simulateTreeConstruction(t)
         return t
 
-
     def simulateTreeConstruction(self, t):
         """^(A B C): emit create A, create B, add child, ..."""
         self.dbg.createNode(t)
@@ -269,22 +246,18 @@ class DebugTreeAdaptor(TreeAdaptor):
             self.simulateTreeConstruction(child)
             self.dbg.addChild(t, child)
 
-
     def dupNode(self, treeNode):
         d = self.adaptor.dupNode(treeNode)
         self.dbg.createNode(d)
         return d
-
 
     def nil(self):
         node = self.adaptor.nil()
         self.dbg.nilNode(node)
         return node
 
-
     def isNil(self, tree):
         return self.adaptor.isNil(tree)
-
 
     def addChild(self, t, child):
         if isinstance(child, Token):
@@ -308,85 +281,64 @@ class DebugTreeAdaptor(TreeAdaptor):
         self.dbg.becomeRoot(newRoot, oldRoot)
         return n
 
-
     def rulePostProcessing(self, root):
         return self.adaptor.rulePostProcessing(root)
-
 
     def getType(self, t):
         return self.adaptor.getType(t)
 
-
     def setType(self, t, type):
         self.adaptor.setType(t, type)
-
 
     def getText(self, t):
         return self.adaptor.getText(t)
 
-
     def setText(self, t, text):
         self.adaptor.setText(t, text)
-
 
     def getToken(self, t):
         return self.adaptor.getToken(t)
 
-
     def setTokenBoundaries(self, t, startToken, stopToken):
         self.adaptor.setTokenBoundaries(t, startToken, stopToken)
         if t and startToken and stopToken:
-            self.dbg.setTokenBoundaries(
-                t, startToken.index, stopToken.index)
-
+            self.dbg.setTokenBoundaries(t, startToken.index, stopToken.index)
 
     def getTokenStartIndex(self, t):
         return self.adaptor.getTokenStartIndex(t)
 
-
     def getTokenStopIndex(self, t):
         return self.adaptor.getTokenStopIndex(t)
-
 
     def getChild(self, t, i):
         return self.adaptor.getChild(t, i)
 
-
     def setChild(self, t, i, child):
         self.adaptor.setChild(t, i, child)
-
 
     def deleteChild(self, t, i):
         return self.adaptor.deleteChild(t, i)
 
-
     def getChildCount(self, t):
         return self.adaptor.getChildCount(t)
-
 
     def getUniqueID(self, node):
         return self.adaptor.getUniqueID(node)
 
-
     def getParent(self, t):
         return self.adaptor.getParent(t)
-
 
     def getChildIndex(self, t):
         return self.adaptor.getChildIndex(t)
 
-
     def setParent(self, t, parent):
         self.adaptor.setParent(t, parent)
-
 
     def setChildIndex(self, t, index):
         self.adaptor.setChildIndex(t, index)
 
-
     def replaceChildren(self, parent, startChildIndex, stopChildIndex, t):
         self.adaptor.replaceChildren(parent, startChildIndex, stopChildIndex, t)
-
 
     ## support
 
@@ -396,13 +348,11 @@ class DebugTreeAdaptor(TreeAdaptor):
     def setDebugListener(self, dbg):
         self.dbg = dbg
 
-
     def getTreeAdaptor(self):
         return self.adaptor
 
 
-
-class DebugEventListener(object):
+class DebugEventListener:
     """All debugging events that a recognizer can trigger.
 
     I did not create a separate AST debugging interface as it would create
@@ -424,15 +374,10 @@ class DebugEventListener(object):
         multiple grammar files.
         """
 
-        pass
-
-
     def enterAlt(self, alt):
         """Because rules can have lots of alternatives, it is very useful to
         know which alt you are entering.  This is 1..n for n alts.
         """
-        pass
-
 
     def exitRule(self, grammarFileName, ruleName):
         """This is the last thing executed before leaving a rule.  It is
@@ -442,17 +387,12 @@ class DebugEventListener(object):
         The grammarFileName allows composite grammars to jump around among
         multiple grammar files.
         """
-        pass
-
 
     def enterSubRule(self, decisionNumber):
         """Track entry into any (...) subrule other EBNF construct"""
-        pass
-
 
     def exitSubRule(self, decisionNumber):
         pass
-
 
     def enterDecision(self, decisionNumber, couldBacktrack):
         """Every decision, fixed k or arbitrary, has an enter/exit event
@@ -461,27 +401,20 @@ class DebugEventListener(object):
         subrule but multiple enter/exit decision events, one for each
         loop iteration.
         """
-        pass
-
 
     def exitDecision(self, decisionNumber):
         pass
-
 
     def consumeToken(self, t):
         """An input token was consumed; matched by any kind of element.
         Trigger after the token was matched by things like match(), matchAny().
         """
-        pass
-
 
     def consumeHiddenToken(self, t):
         """An off-channel input token was consumed.
         Trigger after the token was matched by things like match(), matchAny().
         (unless of course the hidden token is first stuff in the input stream).
         """
-        pass
-
 
     def LT(self, i, t):
         """Somebody (anybody) looked ahead.  Note that this actually gets
@@ -494,15 +427,11 @@ class DebugEventListener(object):
         then the ID is not really meaningful as it's fixed--there is
         just one UP node and one DOWN navigation node.
         """
-        pass
-
 
     def mark(self, marker):
         """The parser is going to look arbitrarily ahead; mark this location,
         the token stream's marker is sent in case you need it.
         """
-        pass
-
 
     def rewind(self, marker=None):
         """After an arbitrairly long lookahead as with a cyclic DFA (or with
@@ -510,16 +439,12 @@ class DebugEventListener(object):
         rewound to the position associated with marker.
 
         """
-        pass
-
 
     def beginBacktrack(self, level):
         pass
 
-
     def endBacktrack(self, level, successful):
         pass
-
 
     def location(self, line, pos):
         """To watch a parser move through the grammar, the parser needs to
@@ -530,8 +455,6 @@ class DebugEventListener(object):
         This should also allow breakpoints because the debugger can stop
         the parser whenever it hits this line/pos.
         """
-        pass
-
 
     def recognitionException(self, e):
         """A recognition exception occurred such as NoViableAltException.  I made
@@ -590,16 +513,12 @@ class DebugEventListener(object):
                 exitRule b
                 terminate
         """
-        pass
-
 
     def beginResync(self):
         """Indicates the recognizer is about to consume tokens to resynchronize
         the parser.  Any consume events from here until the recovered event
         are not part of the parse--they are dead tokens.
         """
-        pass
-
 
     def endResync(self):
         """Indicates that the recognizer has finished consuming tokens in order
@@ -610,13 +529,9 @@ class DebugEventListener(object):
         but not matched to anything in grammar.  Anything between
         a beginResync/endResync pair was tossed out by the parser.
         """
-        pass
-
 
     def semanticPredicate(self, result, predicate):
         """A semantic predicate was evaluate with this result and action text"""
-        pass
-
 
     def commence(self):
         """Announce that parsing has begun.  Not technically useful except for
@@ -626,8 +541,6 @@ class DebugEventListener(object):
         trigger this upon entry to the first rule (the ruleLevel is used to
         figure this out).
         """
-        pass
-
 
     def terminate(self):
         """Parsing is over; successfully or not.  Mostly useful for telling
@@ -635,8 +548,6 @@ class DebugEventListener(object):
         invocation level goes to zero at the end of a rule, we are done
         parsing.
         """
-        pass
-
 
     ## T r e e  P a r s i n g
 
@@ -649,8 +560,6 @@ class DebugEventListener(object):
         the ID is not really meaningful as it's fixed--there is
         just one UP node and one DOWN navigation node.
         """
-        pass
-
 
     ## A S T  E v e n t s
 
@@ -664,15 +573,11 @@ class DebugEventListener(object):
         If you are receiving this event over a socket via
         RemoteDebugEventSocketListener then only t.ID is set.
         """
-        pass
-
 
     def errorNode(self, t):
         """Upon syntax error, recognizers bracket the error with an error node
         if they are building ASTs.
         """
-        pass
-
 
     def createNode(self, node, token=None):
         """Announce a new node built from token elements such as type etc...
@@ -681,8 +586,6 @@ class DebugEventListener(object):
         RemoteDebugEventSocketListener then only t.ID, type, text are
         set.
         """
-        pass
-
 
     def becomeRoot(self, newRoot, oldRoot):
         """Make a node the new root of an existing root.
@@ -701,8 +604,6 @@ class DebugEventListener(object):
 
         @see antlr3.tree.TreeAdaptor.becomeRoot()
         """
-        pass
-
 
     def addChild(self, root, child):
         """Make childID a child of rootID.
@@ -712,8 +613,6 @@ class DebugEventListener(object):
 
         @see antlr3.tree.TreeAdaptor.addChild()
         """
-        pass
-
 
     def setTokenBoundaries(self, t, tokenStartIndex, tokenStopIndex):
         """Set the token start/stop token index for a subtree root or node.
@@ -721,7 +620,6 @@ class DebugEventListener(object):
         If you are receiving this event over a socket via
         RemoteDebugEventSocketListener then only t.ID is set.
         """
-        pass
 
 
 class BlankDebugEventListener(DebugEventListener):
@@ -732,7 +630,6 @@ class BlankDebugEventListener(DebugEventListener):
     Note: this class is identical to DebugEventListener and exists purely
     for compatibility with Java.
     """
-    pass
 
 
 class TraceDebugEventListener(DebugEventListener):
@@ -752,7 +649,7 @@ class TraceDebugEventListener(DebugEventListener):
         self.adaptor = adaptor
 
     def record(self, event):
-        sys.stdout.write(event + '\n')
+        sys.stdout.write(event + "\n")
 
     def enterRule(self, grammarFileName, ruleName):
         self.record("enterRule " + ruleName)
@@ -767,54 +664,66 @@ class TraceDebugEventListener(DebugEventListener):
         self.record("exitSubRule")
 
     def location(self, line, pos):
-        self.record("location {}:{}".format(line, pos))
+        self.record(f"location {line}:{pos}")
 
     ## Tree parsing stuff
 
     def consumeNode(self, t):
-        self.record("consumeNode {} {} {}".format(
+        self.record(
+            "consumeNode {} {} {}".format(
                 self.adaptor.getUniqueID(t),
                 self.adaptor.getText(t),
-                self.adaptor.getType(t)))
+                self.adaptor.getType(t),
+            )
+        )
 
     def LT(self, i, t):
-        self.record("LT {} {} {} {}".format(
+        self.record(
+            "LT {} {} {} {}".format(
                 i,
                 self.adaptor.getUniqueID(t),
                 self.adaptor.getText(t),
-                self.adaptor.getType(t)))
-
+                self.adaptor.getType(t),
+            )
+        )
 
     ## AST stuff
     def nilNode(self, t):
-        self.record("nilNode {}".format(self.adaptor.getUniqueID(t)))
+        self.record(f"nilNode {self.adaptor.getUniqueID(t)}")
 
     def createNode(self, t, token=None):
         if token is None:
-            self.record("create {}: {}, {}".format(
+            self.record(
+                "create {}: {}, {}".format(
                     self.adaptor.getUniqueID(t),
                     self.adaptor.getText(t),
-                    self.adaptor.getType(t)))
+                    self.adaptor.getType(t),
+                )
+            )
 
         else:
-            self.record("create {}: {}".format(
-                    self.adaptor.getUniqueID(t),
-                    token.index))
+            self.record(f"create {self.adaptor.getUniqueID(t)}: {token.index}")
 
     def becomeRoot(self, newRoot, oldRoot):
-        self.record("becomeRoot {}, {}".format(
-                self.adaptor.getUniqueID(newRoot),
-                self.adaptor.getUniqueID(oldRoot)))
+        self.record(
+            "becomeRoot {}, {}".format(
+                self.adaptor.getUniqueID(newRoot), self.adaptor.getUniqueID(oldRoot)
+            )
+        )
 
     def addChild(self, root, child):
-        self.record("addChild {}, {}".format(
-                self.adaptor.getUniqueID(root),
-                self.adaptor.getUniqueID(child)))
+        self.record(
+            "addChild {}, {}".format(
+                self.adaptor.getUniqueID(root), self.adaptor.getUniqueID(child)
+            )
+        )
 
     def setTokenBoundaries(self, t, tokenStartIndex, tokenStopIndex):
-        self.record("setTokenBoundaries {}, {}, {}".format(
-                self.adaptor.getUniqueID(t),
-                tokenStartIndex, tokenStopIndex))
+        self.record(
+            "setTokenBoundaries {}, {}, {}".format(
+                self.adaptor.getUniqueID(t), tokenStartIndex, tokenStopIndex
+            )
+        )
 
 
 class RecordDebugEventListener(TraceDebugEventListener):
@@ -858,56 +767,49 @@ class DebugEventSocketProxy(DebugEventListener):
         self.input = None
         self.output = None
 
-
     def log(self, msg):
         if self.debug:
-            self.debug.write(msg + '\n')
-
+            self.debug.write(msg + "\n")
 
     def handshake(self):
         if self.socket is None:
             # create listening socket
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.socket.bind(('', self.port))
+            self.socket.bind(("", self.port))
             self.socket.listen(1)
-            self.log("Waiting for incoming connection on port {}".format(self.port))
+            self.log(f"Waiting for incoming connection on port {self.port}")
 
             # wait for an incoming connection
             self.connection, addr = self.socket.accept()
-            self.log("Accepted connection from {}:{}".format(addr[0], addr[1]))
+            self.log(f"Accepted connection from {addr[0]}:{addr[1]}")
 
             self.connection.setblocking(1)
             self.connection.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
 
-            self.output = self.connection.makefile('w', 1)
-            self.input = self.connection.makefile('r', 1)
+            self.output = self.connection.makefile("w", 1)
+            self.input = self.connection.makefile("r", 1)
 
-            self.write("ANTLR {}".format(self.PROTOCOL_VERSION))
-            self.write('grammar "{}"'.format(self.grammarFileName))
+            self.write(f"ANTLR {self.PROTOCOL_VERSION}")
+            self.write(f'grammar "{self.grammarFileName}"')
             self.ack()
 
-
     def write(self, msg):
-        self.log("> {}".format(msg))
-        self.output.write("{}\n".format(msg))
+        self.log(f"> {msg}")
+        self.output.write(f"{msg}\n")
         self.output.flush()
-
 
     def ack(self):
         t = self.input.readline()
-        self.log("< {}".format(t.rstrip()))
-
+        self.log(f"< {t.rstrip()}")
 
     def transmit(self, event):
         self.write(event)
         self.ack()
 
-
     def commence(self):
         # don't bother sending event; listener will trigger upon connection
         pass
-
 
     def terminate(self):
         self.transmit("terminate")
@@ -916,194 +818,183 @@ class DebugEventSocketProxy(DebugEventListener):
         self.connection.close()
         self.socket.close()
 
-
     def enterRule(self, grammarFileName, ruleName):
-        self.transmit("enterRule\t{}\t{}".format(grammarFileName, ruleName))
-
+        self.transmit(f"enterRule\t{grammarFileName}\t{ruleName}")
 
     def enterAlt(self, alt):
-        self.transmit("enterAlt\t{}".format(alt))
-
+        self.transmit(f"enterAlt\t{alt}")
 
     def exitRule(self, grammarFileName, ruleName):
-        self.transmit("exitRule\t{}\t{}".format(grammarFileName, ruleName))
-
+        self.transmit(f"exitRule\t{grammarFileName}\t{ruleName}")
 
     def enterSubRule(self, decisionNumber):
-        self.transmit("enterSubRule\t{}".format(decisionNumber))
-
+        self.transmit(f"enterSubRule\t{decisionNumber}")
 
     def exitSubRule(self, decisionNumber):
-        self.transmit("exitSubRule\t{}".format(decisionNumber))
-
+        self.transmit(f"exitSubRule\t{decisionNumber}")
 
     def enterDecision(self, decisionNumber, couldBacktrack):
-        self.transmit(
-            "enterDecision\t{}\t{:d}".format(decisionNumber, couldBacktrack))
-
+        self.transmit(f"enterDecision\t{decisionNumber}\t{couldBacktrack:d}")
 
     def exitDecision(self, decisionNumber):
-        self.transmit("exitDecision\t{}".format(decisionNumber))
-
+        self.transmit(f"exitDecision\t{decisionNumber}")
 
     def consumeToken(self, t):
-        self.transmit("consumeToken\t{}".format(self.serializeToken(t)))
-
+        self.transmit(f"consumeToken\t{self.serializeToken(t)}")
 
     def consumeHiddenToken(self, t):
-        self.transmit("consumeHiddenToken\t{}".format(self.serializeToken(t)))
-
+        self.transmit(f"consumeHiddenToken\t{self.serializeToken(t)}")
 
     def LT(self, i, o):
         if isinstance(o, Tree):
             return self.LT_tree(i, o)
         return self.LT_token(i, o)
 
-
     def LT_token(self, i, t):
         if t is not None:
-            self.transmit("LT\t{}\t{}".format(i, self.serializeToken(t)))
-
+            self.transmit(f"LT\t{i}\t{self.serializeToken(t)}")
 
     def mark(self, i):
-        self.transmit("mark\t{}".format(i))
-
+        self.transmit(f"mark\t{i}")
 
     def rewind(self, i=None):
         if i is not None:
-            self.transmit("rewind\t{}".format(i))
+            self.transmit(f"rewind\t{i}")
         else:
             self.transmit("rewind")
 
-
     def beginBacktrack(self, level):
-        self.transmit("beginBacktrack\t{}".format(level))
-
+        self.transmit(f"beginBacktrack\t{level}")
 
     def endBacktrack(self, level, successful):
-        self.transmit("endBacktrack\t{}\t{}".format(
-                level, '1' if successful else '0'))
-
+        self.transmit("endBacktrack\t{}\t{}".format(level, "1" if successful else "0"))
 
     def location(self, line, pos):
-        self.transmit("location\t{}\t{}".format(line, pos))
-
+        self.transmit(f"location\t{line}\t{pos}")
 
     def recognitionException(self, exc):
-        self.transmit('\t'.join([
+        self.transmit(
+            "\t".join(
+                [
                     "exception",
                     exc.__class__.__name__,
                     str(int(exc.index)),
                     str(int(exc.line)),
-                    str(int(exc.charPositionInLine))]))
-
+                    str(int(exc.charPositionInLine)),
+                ]
+            )
+        )
 
     def beginResync(self):
         self.transmit("beginResync")
 
-
     def endResync(self):
         self.transmit("endResync")
 
-
     def semanticPredicate(self, result, predicate):
-        self.transmit('\t'.join([
-                    "semanticPredicate",
-                    str(int(result)),
-                    self.escapeNewlines(predicate)]))
+        self.transmit(
+            "\t".join(
+                ["semanticPredicate", str(int(result)), self.escapeNewlines(predicate)]
+            )
+        )
 
     ## A S T  P a r s i n g  E v e n t s
 
     def consumeNode(self, t):
         FIXME(31)
-#         StringBuffer buf = new StringBuffer(50);
-#         buf.append("consumeNode");
-#         serializeNode(buf, t);
-#         transmit(buf.toString());
 
+    #         StringBuffer buf = new StringBuffer(50);
+    #         buf.append("consumeNode");
+    #         serializeNode(buf, t);
+    #         transmit(buf.toString());
 
     def LT_tree(self, i, t):
         FIXME(34)
-#         int ID = adaptor.getUniqueID(t);
-#         String text = adaptor.getText(t);
-#         int type = adaptor.getType(t);
-#         StringBuffer buf = new StringBuffer(50);
-#         buf.append("LN\t"); // lookahead node; distinguish from LT in protocol
-#         buf.append(i);
-#         serializeNode(buf, t);
-#         transmit(buf.toString());
 
+    #         int ID = adaptor.getUniqueID(t);
+    #         String text = adaptor.getText(t);
+    #         int type = adaptor.getType(t);
+    #         StringBuffer buf = new StringBuffer(50);
+    #         buf.append("LN\t"); // lookahead node; distinguish from LT in protocol
+    #         buf.append(i);
+    #         serializeNode(buf, t);
+    #         transmit(buf.toString());
 
     def serializeNode(self, buf, t):
         FIXME(33)
-#         int ID = adaptor.getUniqueID(t);
-#         String text = adaptor.getText(t);
-#         int type = adaptor.getType(t);
-#         buf.append("\t");
-#         buf.append(ID);
-#         buf.append("\t");
-#         buf.append(type);
-#         Token token = adaptor.getToken(t);
-#         int line = -1;
-#         int pos = -1;
-#         if ( token!=null ) {
-#             line = token.getLine();
-#             pos = token.getCharPositionInLine();
-#             }
-#         buf.append("\t");
-#         buf.append(line);
-#         buf.append("\t");
-#         buf.append(pos);
-#         int tokenIndex = adaptor.getTokenStartIndex(t);
-#         buf.append("\t");
-#         buf.append(tokenIndex);
-#         serializeText(buf, text);
 
+    #         int ID = adaptor.getUniqueID(t);
+    #         String text = adaptor.getText(t);
+    #         int type = adaptor.getType(t);
+    #         buf.append("\t");
+    #         buf.append(ID);
+    #         buf.append("\t");
+    #         buf.append(type);
+    #         Token token = adaptor.getToken(t);
+    #         int line = -1;
+    #         int pos = -1;
+    #         if ( token!=null ) {
+    #             line = token.getLine();
+    #             pos = token.getCharPositionInLine();
+    #             }
+    #         buf.append("\t");
+    #         buf.append(line);
+    #         buf.append("\t");
+    #         buf.append(pos);
+    #         int tokenIndex = adaptor.getTokenStartIndex(t);
+    #         buf.append("\t");
+    #         buf.append(tokenIndex);
+    #         serializeText(buf, text);
 
     ## A S T  E v e n t s
 
     def nilNode(self, t):
-        self.transmit("nilNode\t{}".format(self.adaptor.getUniqueID(t)))
-
+        self.transmit(f"nilNode\t{self.adaptor.getUniqueID(t)}")
 
     def errorNode(self, t):
-        self.transmit('errorNode\t{}\t{}\t"{}'.format(
-             self.adaptor.getUniqueID(t),
-             INVALID_TOKEN_TYPE,
-             self.escapeNewlines(t.toString())))
-
+        self.transmit(
+            'errorNode\t{}\t{}\t"{}'.format(
+                self.adaptor.getUniqueID(t),
+                INVALID_TOKEN_TYPE,
+                self.escapeNewlines(t.toString()),
+            )
+        )
 
     def createNode(self, node, token=None):
         if token is not None:
-            self.transmit("createNode\t{}\t{}".format(
-                    self.adaptor.getUniqueID(node),
-                    token.index))
+            self.transmit(
+                f"createNode\t{self.adaptor.getUniqueID(node)}\t{token.index}"
+            )
 
         else:
-            self.transmit('createNodeFromTokenElements\t{}\t{}\t"{}'.format(
+            self.transmit(
+                'createNodeFromTokenElements\t{}\t{}\t"{}'.format(
                     self.adaptor.getUniqueID(node),
                     self.adaptor.getType(node),
-                    self.adaptor.getText(node)))
-
+                    self.adaptor.getText(node),
+                )
+            )
 
     def becomeRoot(self, newRoot, oldRoot):
-        self.transmit("becomeRoot\t{}\t{}".format(
-                self.adaptor.getUniqueID(newRoot),
-                self.adaptor.getUniqueID(oldRoot)))
-
+        self.transmit(
+            "becomeRoot\t{}\t{}".format(
+                self.adaptor.getUniqueID(newRoot), self.adaptor.getUniqueID(oldRoot)
+            )
+        )
 
     def addChild(self, root, child):
-        self.transmit("addChild\t{}\t{}".format(
-                self.adaptor.getUniqueID(root),
-                self.adaptor.getUniqueID(child)))
-
+        self.transmit(
+            "addChild\t{}\t{}".format(
+                self.adaptor.getUniqueID(root), self.adaptor.getUniqueID(child)
+            )
+        )
 
     def setTokenBoundaries(self, t, tokenStartIndex, tokenStopIndex):
-        self.transmit("setTokenBoundaries\t{}\t{}\t{}".format(
-                self.adaptor.getUniqueID(t),
-                tokenStartIndex, tokenStopIndex))
-
-
+        self.transmit(
+            "setTokenBoundaries\t{}\t{}\t{}".format(
+                self.adaptor.getUniqueID(t), tokenStartIndex, tokenStopIndex
+            )
+        )
 
     ## support
 
@@ -1113,22 +1004,22 @@ class DebugEventSocketProxy(DebugEventListener):
     def getTreeAdaptor(self):
         return self.adaptor
 
-
     def serializeToken(self, t):
-        buf = [str(int(t.index)),
-               str(int(t.type)),
-               str(int(t.channel)),
-               str(int(t.line or 0)),
-               str(int(t.charPositionInLine or 0)),
-               '"' + self.escapeNewlines(t.text)]
-        return '\t'.join(buf)
-
+        buf = [
+            str(int(t.index)),
+            str(int(t.type)),
+            str(int(t.channel)),
+            str(int(t.line or 0)),
+            str(int(t.charPositionInLine or 0)),
+            '"' + self.escapeNewlines(t.text),
+        ]
+        return "\t".join(buf)
 
     def escapeNewlines(self, txt):
         if txt is None:
-            return ''
+            return ""
 
-        txt = txt.replace("%","%25")   # escape all escape char ;)
-        txt = txt.replace("\n","%0A")  # escape \n
-        txt = txt.replace("\r","%0D")  # escape \r
+        txt = txt.replace("%", "%25")  # escape all escape char ;)
+        txt = txt.replace("\n", "%0A")  # escape \n
+        txt = txt.replace("\r", "%0D")  # escape \r
         return txt

@@ -40,14 +40,17 @@ This module contains all support classes for AST construction and tree parsers.
 
 import re
 
-from antlr3.constants import UP, DOWN, EOF, INVALID_TOKEN_TYPE
+from antlr3.constants import DOWN, EOF, INVALID_TOKEN_TYPE, UP
+from antlr3.exceptions import (
+    MismatchedTokenException,
+    MismatchedTreeNodeException,
+    MissingTokenException,
+    NoViableAltException,
+    UnwantedTokenException,
+)
 from antlr3.recognizers import BaseRecognizer, RuleReturnScope
 from antlr3.streams import IntStream
-from antlr3.tokens import CommonToken, Token, INVALID_TOKEN
-from antlr3.exceptions import MismatchedTreeNodeException, \
-     MissingTokenException, UnwantedTokenException, MismatchedTokenException, \
-     NoViableAltException
-
+from antlr3.tokens import INVALID_TOKEN, CommonToken, Token
 
 ############################################################################
 #
@@ -69,7 +72,6 @@ class RewriteCardinalityException(RuntimeError):
 
         self.elementDescription = elementDescription
 
-
     def getMessage(self):
         return self.elementDescription
 
@@ -86,8 +88,6 @@ class RewriteEmptyStreamException(RewriteCardinalityException):
     @brief Ref to ID or expr but no tokens in ID stream or subtrees in expr stream
     """
 
-    pass
-
 
 ############################################################################
 #
@@ -95,7 +95,8 @@ class RewriteEmptyStreamException(RewriteCardinalityException):
 #
 ############################################################################
 
-class Tree(object):
+
+class Tree:
     """
     @brief Abstract baseclass for tree nodes.
 
@@ -110,14 +111,11 @@ class Tree(object):
     This is a tree node without any payload; just navigation and factory stuff.
     """
 
-
     def getChild(self, i):
         raise NotImplementedError
 
-
     def getChildCount(self):
         raise NotImplementedError
-
 
     def getParent(self):
         """Tree tracks parent and child index now > 3.0"""
@@ -128,7 +126,6 @@ class Tree(object):
         """Tree tracks parent and child index now > 3.0"""
 
         raise NotImplementedError
-
 
     def hasAncestor(self, ttype):
         """Walk upwards looking for ancestor with this token type."""
@@ -149,7 +146,6 @@ class Tree(object):
 
         raise NotImplementedError
 
-
     def getChildIndex(self):
         """This node is what child index? 0..n-1"""
 
@@ -160,12 +156,10 @@ class Tree(object):
 
         raise NotImplementedError
 
-
     def freshenParentAndChildIndexes(self):
         """Set the parent and child index values for all children"""
 
         raise NotImplementedError
-
 
     def addChild(self, t):
         """
@@ -175,16 +169,13 @@ class Tree(object):
 
         raise NotImplementedError
 
-
     def setChild(self, i, t):
         """Set ith child (0..n-1) to t; t must be non-null and non-nil node"""
 
         raise NotImplementedError
 
-
     def deleteChild(self, i):
         raise NotImplementedError
-
 
     def replaceChildren(self, startChildIndex, stopChildIndex, t):
         """
@@ -196,7 +187,6 @@ class Tree(object):
 
         raise NotImplementedError
 
-
     def isNil(self):
         """
         Indicates the node is a nil node but may still have children, meaning
@@ -204,7 +194,6 @@ class Tree(object):
         """
 
         raise NotImplementedError
-
 
     def getTokenStartIndex(self):
         """
@@ -214,10 +203,8 @@ class Tree(object):
 
         raise NotImplementedError
 
-
     def setTokenStartIndex(self, index):
         raise NotImplementedError
-
 
     def getTokenStopIndex(self):
         """
@@ -227,24 +214,19 @@ class Tree(object):
 
         raise NotImplementedError
 
-
     def setTokenStopIndex(self, index):
         raise NotImplementedError
 
-
     def dupNode(self):
         raise NotImplementedError
-
 
     def getType(self):
         """Return a token type; needed for tree parsing."""
 
         raise NotImplementedError
 
-
     def getText(self):
         raise NotImplementedError
-
 
     def getLine(self):
         """
@@ -253,21 +235,17 @@ class Tree(object):
 
         raise NotImplementedError
 
-
     def getCharPositionInLine(self):
         raise NotImplementedError
 
-
     def toStringTree(self):
         raise NotImplementedError
-
 
     def toString(self):
         raise NotImplementedError
 
 
-
-class TreeAdaptor(object):
+class TreeAdaptor:
     """
     @brief Abstract baseclass for tree adaptors.
 
@@ -294,7 +272,6 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def dupNode(self, treeNode):
         """Duplicate a single tree node.
 
@@ -302,12 +279,10 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def dupTree(self, tree):
         """Duplicate tree recursively, using dupNode() for each node"""
 
         raise NotImplementedError
-
 
     def nil(self):
         """
@@ -317,7 +292,6 @@ class TreeAdaptor(object):
         """
 
         raise NotImplementedError
-
 
     def errorNode(self, input, start, stop, exc):
         """
@@ -338,12 +312,10 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def isNil(self, tree):
         """Is tree considered a nil node used to make lists of child nodes?"""
 
         raise NotImplementedError
-
 
     def addChild(self, t, child):
         """
@@ -356,7 +328,6 @@ class TreeAdaptor(object):
         """
 
         raise NotImplementedError
-
 
     def becomeRoot(self, newRoot, oldRoot):
         """
@@ -389,7 +360,6 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def rulePostProcessing(self, root):
         """
         Given the root of the subtree created for this rule, post process
@@ -408,7 +378,6 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def getUniqueID(self, node):
         """For identifying trees.
 
@@ -418,7 +387,6 @@ class TreeAdaptor(object):
         """
 
         raise NotImplementedError
-
 
     # R e w r i t e  R u l e s
 
@@ -435,7 +403,6 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def createFromType(self, tokenType, text):
         """Create a new node derived from a token, with a new token type.
 
@@ -447,7 +414,6 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     # C o n t e n t
 
     def getType(self, t):
@@ -455,12 +421,10 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def setType(self, t, type):
         """Node constructors can set the type of a node"""
 
         raise NotImplementedError
-
 
     def getText(self, t):
         raise NotImplementedError
@@ -469,7 +433,6 @@ class TreeAdaptor(object):
         """Node constructors can set the text of a node"""
 
         raise NotImplementedError
-
 
     def getToken(self, t):
         """Return the token object from which this node was created.
@@ -485,7 +448,6 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def setTokenBoundaries(self, t, startToken, stopToken):
         """
         Where are the bounds in the input token stream for this node and
@@ -497,14 +459,12 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def getTokenStartIndex(self, t):
         """
         Get the token start index for this subtree; return -1 if no such index
         """
 
         raise NotImplementedError
-
 
     def getTokenStopIndex(self, t):
         """
@@ -513,7 +473,6 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     # N a v i g a t i o n  /  T r e e  P a r s i n g
 
     def getChild(self, t, i):
@@ -521,24 +480,20 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def setChild(self, t, i, child):
         """Set ith child (0..n-1) to t; t must be non-null and non-nil node"""
 
         raise NotImplementedError
-
 
     def deleteChild(self, t, i):
         """Remove ith child and shift children down from right."""
 
         raise NotImplementedError
 
-
     def getChildCount(self, t):
         """How many children?  If 0, then this is a leaf node"""
 
         raise NotImplementedError
-
 
     def getParent(self, t):
         """
@@ -549,7 +504,6 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def setParent(self, t, parent):
         """
         Who is the parent node of this node; if null, implies node is root.
@@ -558,7 +512,6 @@ class TreeAdaptor(object):
         """
 
         raise NotImplementedError
-
 
     def getChildIndex(self, t):
         """
@@ -569,7 +522,6 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     def setChildIndex(self, t, index):
         """
         What index is this node in the child list? Range: 0..n-1
@@ -578,7 +530,6 @@ class TreeAdaptor(object):
         """
 
         raise NotImplementedError
-
 
     def replaceChildren(self, parent, startChildIndex, stopChildIndex, t):
         """
@@ -592,7 +543,6 @@ class TreeAdaptor(object):
 
         raise NotImplementedError
 
-
     # Misc
 
     def create(self, *args):
@@ -605,50 +555,50 @@ class TreeAdaptor(object):
 
         if len(args) == 1 and isinstance(args[0], Token):
             # Object create(Token payload);
-##             warnings.warn(
-##                 "Using create() is deprecated, use createWithPayload()",
-##                 DeprecationWarning,
-##                 stacklevel=2
-##                 )
+            ##             warnings.warn(
+            ##                 "Using create() is deprecated, use createWithPayload()",
+            ##                 DeprecationWarning,
+            ##                 stacklevel=2
+            ##                 )
             return self.createWithPayload(args[0])
 
-        if (len(args) == 2
-            and isinstance(args[0], int)
-            and isinstance(args[1], Token)):
+        if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], Token):
             # Object create(int tokenType, Token fromToken);
-##             warnings.warn(
-##                 "Using create() is deprecated, use createFromToken()",
-##                 DeprecationWarning,
-##                 stacklevel=2
-##                 )
+            ##             warnings.warn(
+            ##                 "Using create() is deprecated, use createFromToken()",
+            ##                 DeprecationWarning,
+            ##                 stacklevel=2
+            ##                 )
             return self.createFromToken(args[0], args[1])
 
-        if (len(args) == 3
+        if (
+            len(args) == 3
             and isinstance(args[0], int)
             and isinstance(args[1], Token)
-            and isinstance(args[2], str)):
+            and isinstance(args[2], str)
+        ):
             # Object create(int tokenType, Token fromToken, String text);
-##             warnings.warn(
-##                 "Using create() is deprecated, use createFromToken()",
-##                 DeprecationWarning,
-##                 stacklevel=2
-##                 )
+            ##             warnings.warn(
+            ##                 "Using create() is deprecated, use createFromToken()",
+            ##                 DeprecationWarning,
+            ##                 stacklevel=2
+            ##                 )
             return self.createFromToken(args[0], args[1], args[2])
 
-        if (len(args) == 2
-            and isinstance(args[0], int)
-            and isinstance(args[1], str)):
+        if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], str):
             # Object create(int tokenType, String text);
-##             warnings.warn(
-##                 "Using create() is deprecated, use createFromType()",
-##                 DeprecationWarning,
-##                 stacklevel=2
-##                 )
+            ##             warnings.warn(
+            ##                 "Using create() is deprecated, use createFromType()",
+            ##                 DeprecationWarning,
+            ##                 stacklevel=2
+            ##                 )
             return self.createFromType(args[0], args[1])
 
         raise TypeError(
-            "No create method with this signature found: {}"
-            .format(', '.join(type(v).__name__ for v in args)))
+            "No create method with this signature found: {}".format(
+                ", ".join(type(v).__name__ for v in args)
+            )
+        )
 
 
 ############################################################################
@@ -691,13 +641,11 @@ class BaseTree(Tree):
         self.parent = None
         self.childIndex = 0
 
-
     def getChild(self, i):
         try:
             return self.children[i]
         except IndexError:
             return None
-
 
     def getChildren(self):
         """@brief Get the children internal List
@@ -709,7 +657,6 @@ class BaseTree(Tree):
         # FIXME: mark as deprecated
         return self.children
 
-
     def getFirstChildWithType(self, treeType):
         for child in self.children:
             if child.getType() == treeType:
@@ -717,10 +664,8 @@ class BaseTree(Tree):
 
         return None
 
-
     def getChildCount(self):
         return len(self.children)
-
 
     def addChild(self, childTree):
         """Add t as child of this node.
@@ -755,12 +700,10 @@ class BaseTree(Tree):
             childTree.parent = self
             childTree.childIndex = len(self.children) - 1
 
-
     def addChildren(self, children):
         """Add all elements of kids list as children of this node"""
 
         self.children += children
-
 
     def setChild(self, i, t):
         if t is None:
@@ -773,7 +716,6 @@ class BaseTree(Tree):
         t.parent = self
         t.childIndex = i
 
-
     def deleteChild(self, i):
         killed = self.children[i]
 
@@ -785,7 +727,6 @@ class BaseTree(Tree):
 
         return killed
 
-
     def replaceChildren(self, startChildIndex, stopChildIndex, newTree):
         """
         Delete children from start to stop and replace with t even if t is
@@ -794,8 +735,9 @@ class BaseTree(Tree):
         children to set their childindex; could be slow.
         """
 
-        if (startChildIndex >= len(self.children)
-            or stopChildIndex >= len(self.children)):
+        if startChildIndex >= len(self.children) or stopChildIndex >= len(
+            self.children
+        ):
             raise IndexError("indexes invalid")
 
         replacingHowMany = stopChildIndex - startChildIndex + 1
@@ -810,7 +752,6 @@ class BaseTree(Tree):
         replacingWithHowMany = len(newChildren)
         delta = replacingHowMany - replacingWithHowMany
 
-
         if delta == 0:
             # if same number of nodes, do direct replace
             for idx, child in enumerate(newChildren):
@@ -822,7 +763,7 @@ class BaseTree(Tree):
             # length of children changes...
 
             # ...delete replaced segment...
-            del self.children[startChildIndex:stopChildIndex+1]
+            del self.children[startChildIndex : stopChildIndex + 1]
 
             # ...insert new segment...
             self.children[startChildIndex:startChildIndex] = newChildren
@@ -830,43 +771,39 @@ class BaseTree(Tree):
             # ...and fix indeces
             self.freshenParentAndChildIndexes(startChildIndex)
 
-
     def isNil(self):
         return False
-
 
     def freshenParentAndChildIndexes(self, offset=0):
         for idx, child in enumerate(self.children[offset:]):
             child.childIndex = idx + offset
             child.parent = self
 
-
     def sanityCheckParentAndChildIndexes(self, parent=None, i=-1):
         if parent != self.parent:
             raise ValueError(
-                "parents don't match; expected {!r} found {!r}"
-                .format(parent, self.parent))
+                "parents don't match; expected {!r} found {!r}".format(
+                    parent, self.parent
+                )
+            )
 
         if i != self.childIndex:
             raise ValueError(
-                "child indexes don't match; expected {} found {}"
-                .format(i, self.childIndex))
+                "child indexes don't match; expected {} found {}".format(
+                    i, self.childIndex
+                )
+            )
 
         for idx, child in enumerate(self.children):
             child.sanityCheckParentAndChildIndexes(self, idx)
-
 
     def getChildIndex(self):
         """BaseTree doesn't track child indexes."""
 
         return 0
 
-
     def setChildIndex(self, index):
         """BaseTree doesn't track child indexes."""
-
-        pass
-
 
     def getParent(self):
         """BaseTree doesn't track parent pointers."""
@@ -875,9 +812,6 @@ class BaseTree(Tree):
 
     def setParent(self, t):
         """BaseTree doesn't track parent pointers."""
-
-        pass
-
 
     def hasAncestor(self, ttype):
         """Walk upwards looking for ancestor with this token type."""
@@ -905,11 +839,10 @@ class BaseTree(Tree):
         ancestors = []
         t = self.getParent()
         while t is not None:
-            ancestors.insert(0, t) # insert at start
+            ancestors.insert(0, t)  # insert at start
             t = t.getParent()
 
         return ancestors
-
 
     def toStringTree(self):
         """Print out a whole tree not just a node"""
@@ -919,34 +852,30 @@ class BaseTree(Tree):
 
         buf = []
         if not self.isNil():
-            buf.append('(')
+            buf.append("(")
             buf.append(self.toString())
-            buf.append(' ')
+            buf.append(" ")
 
         for i, child in enumerate(self.children):
             if i > 0:
-                buf.append(' ')
+                buf.append(" ")
             buf.append(child.toStringTree())
 
         if not self.isNil():
-            buf.append(')')
+            buf.append(")")
 
-        return ''.join(buf)
-
+        return "".join(buf)
 
     def getLine(self):
         return 0
 
-
     def getCharPositionInLine(self):
         return 0
-
 
     def toString(self):
         """Override to say how a node (not a tree) should look as text"""
 
         raise NotImplementedError
-
 
 
 class BaseTreeAdaptor(TreeAdaptor):
@@ -960,7 +889,6 @@ class BaseTreeAdaptor(TreeAdaptor):
 
     def nil(self):
         return self.createWithPayload(None)
-
 
     def errorNode(self, input, start, stop, exc):
         """
@@ -978,10 +906,8 @@ class BaseTreeAdaptor(TreeAdaptor):
 
         return CommonErrorNode(input, start, stop, exc)
 
-
     def isNil(self, tree):
         return tree.isNil()
-
 
     def dupTree(self, t, parent=None):
         """
@@ -1009,7 +935,6 @@ class BaseTreeAdaptor(TreeAdaptor):
 
         return newTree
 
-
     def addChild(self, tree, child):
         """
         Add a child to the tree t.  If child is a flat tree (a list), make all
@@ -1020,12 +945,11 @@ class BaseTreeAdaptor(TreeAdaptor):
         ASTs.
         """
 
-        #if isinstance(child, Token):
+        # if isinstance(child, Token):
         #    child = self.createWithPayload(child)
 
         if tree is not None and child is not None:
             tree.addChild(child)
-
 
     def becomeRoot(self, newRoot, oldRoot):
         """
@@ -1081,7 +1005,6 @@ class BaseTreeAdaptor(TreeAdaptor):
         newRoot.addChild(oldRoot)
         return newRoot
 
-
     def rulePostProcessing(self, root):
         """Transform ^(nil x) to x and nil to null"""
 
@@ -1096,7 +1019,6 @@ class BaseTreeAdaptor(TreeAdaptor):
                 root.setChildIndex(-1)
 
         return root
-
 
     def createFromToken(self, tokenType, fromToken, text=None):
         if fromToken is None:
@@ -1113,7 +1035,6 @@ class BaseTreeAdaptor(TreeAdaptor):
         t = self.createWithPayload(fromToken)
         return t
 
-
     def createFromType(self, tokenType, text):
         assert isinstance(tokenType, int), type(tokenType).__name__
         assert isinstance(text, str) or text is None, type(text).__name__
@@ -1122,42 +1043,32 @@ class BaseTreeAdaptor(TreeAdaptor):
         t = self.createWithPayload(fromToken)
         return t
 
-
     def getType(self, t):
         return t.getType()
-
 
     def setType(self, t, type):
         raise RuntimeError("don't know enough about Tree node")
 
-
     def getText(self, t):
         return t.getText()
-
 
     def setText(self, t, text):
         raise RuntimeError("don't know enough about Tree node")
 
-
     def getChild(self, t, i):
         return t.getChild(i)
-
 
     def setChild(self, t, i, child):
         t.setChild(i, child)
 
-
     def deleteChild(self, t, i):
         return t.deleteChild(i)
-
 
     def getChildCount(self, t):
         return t.getChildCount()
 
-
     def getUniqueID(self, node):
         return hash(node)
-
 
     def createToken(self, fromToken=None, tokenType=None, text=None):
         """
@@ -1229,19 +1140,14 @@ class CommonTree(BaseTree):
         else:
             raise TypeError(type(payload).__name__)
 
-
-
     def getToken(self):
         return self.token
-
 
     def dupNode(self):
         return CommonTree(self)
 
-
     def isNil(self):
         return self.token is None
-
 
     def getType(self):
         if self.token is None:
@@ -1251,7 +1157,6 @@ class CommonTree(BaseTree):
 
     type = property(getType)
 
-
     def getText(self):
         if self.token is None:
             return None
@@ -1259,7 +1164,6 @@ class CommonTree(BaseTree):
         return self.token.text
 
     text = property(getText)
-
 
     def getLine(self):
         if self.token is None or self.token.line == 0:
@@ -1271,7 +1175,6 @@ class CommonTree(BaseTree):
         return self.token.line
 
     line = property(getLine)
-
 
     def getCharPositionInLine(self):
         if self.token is None or self.token.charPositionInLine == -1:
@@ -1285,7 +1188,6 @@ class CommonTree(BaseTree):
 
     charPositionInLine = property(getCharPositionInLine)
 
-
     def getTokenStartIndex(self):
         if self.startIndex == -1 and self.token:
             return self.token.index
@@ -1297,7 +1199,6 @@ class CommonTree(BaseTree):
 
     tokenStartIndex = property(getTokenStartIndex, setTokenStartIndex)
 
-
     def getTokenStopIndex(self):
         if self.stopIndex == -1 and self.token:
             return self.token.index
@@ -1308,7 +1209,6 @@ class CommonTree(BaseTree):
         self.stopIndex = index
 
     tokenStopIndex = property(getTokenStopIndex, setTokenStopIndex)
-
 
     def setUnknownTokenBoundaries(self):
         """For every node in this subtree, make sure it's start/stop token's
@@ -1335,26 +1235,21 @@ class CommonTree(BaseTree):
             self.startIndex = firstChild.getTokenStartIndex()
             self.stopIndex = lastChild.getTokenStopIndex()
 
-
     def getChildIndex(self):
-        #FIXME: mark as deprecated
+        # FIXME: mark as deprecated
         return self.childIndex
 
-
     def setChildIndex(self, idx):
-        #FIXME: mark as deprecated
+        # FIXME: mark as deprecated
         self.childIndex = idx
 
-
     def getParent(self):
-        #FIXME: mark as deprecated
+        # FIXME: mark as deprecated
         return self.parent
 
-
     def setParent(self, t):
-        #FIXME: mark as deprecated
+        # FIXME: mark as deprecated
         self.parent = t
-
 
     def toString(self):
         if self.isNil():
@@ -1367,20 +1262,18 @@ class CommonTree(BaseTree):
 
     __str__ = toString
 
-
-
     def toStringTree(self):
         if not self.children:
             return self.toString()
 
-        ret = ''
+        ret = ""
         if not self.isNil():
-            ret += '({!s} '.format(self)
+            ret += f"({self!s} "
 
-        ret += ' '.join([child.toStringTree() for child in self.children])
+        ret += " ".join([child.toStringTree() for child in self.children])
 
         if not self.isNil():
-            ret += ')'
+            ret += ")"
 
         return ret
 
@@ -1394,7 +1287,7 @@ class CommonErrorNode(CommonTree):
     def __init__(self, input, start, stop, exc):
         CommonTree.__init__(self, None)
 
-        if (stop is None or (stop.index < start.index and stop.type != EOF)):
+        if stop is None or (stop.index < start.index and stop.type != EOF):
             # sometimes resync does not consume a token (when LT(1) is
             # in follow set.  So, stop will be 1 to left to start. adjust.
             # Also handle case where start is the first token and no token
@@ -1406,14 +1299,11 @@ class CommonErrorNode(CommonTree):
         self.stop = stop
         self.trappedException = exc
 
-
     def isNil(self):
         return False
 
-
     def getType(self):
         return INVALID_TOKEN_TYPE
-
 
     def getText(self):
         if isinstance(self.start, Token):
@@ -1434,29 +1324,38 @@ class CommonErrorNode(CommonTree):
 
         return badText
 
-
     def toString(self):
         if isinstance(self.trappedException, MissingTokenException):
-            return ("<missing type: "
-                    + str(self.trappedException.getMissingType())
-                    + ">")
+            return "<missing type: " + str(self.trappedException.getMissingType()) + ">"
 
         elif isinstance(self.trappedException, UnwantedTokenException):
-            return ("<extraneous: "
-                    + str(self.trappedException.getUnexpectedToken())
-                    + ", resync=" + self.getText() + ">")
+            return (
+                "<extraneous: "
+                + str(self.trappedException.getUnexpectedToken())
+                + ", resync="
+                + self.getText()
+                + ">"
+            )
 
         elif isinstance(self.trappedException, MismatchedTokenException):
-            return ("<mismatched token: "
-                    + str(self.trappedException.token)
-                    + ", resync=" + self.getText() + ">")
+            return (
+                "<mismatched token: "
+                + str(self.trappedException.token)
+                + ", resync="
+                + self.getText()
+                + ">"
+            )
 
         elif isinstance(self.trappedException, NoViableAltException):
-            return ("<unexpected: "
-                    + str(self.trappedException.token)
-                    + ", resync=" + self.getText() + ">")
+            return (
+                "<unexpected: "
+                + str(self.trappedException.token)
+                + ", resync="
+                + self.getText()
+                + ">"
+            )
 
-        return "<error: "+self.getText()+">"
+        return "<error: " + self.getText() + ">"
 
     __str__ = toString
 
@@ -1490,10 +1389,8 @@ class CommonTreeAdaptor(BaseTreeAdaptor):
 
         return treeNode.dupNode()
 
-
     def createWithPayload(self, payload):
         return CommonTree(payload)
-
 
     def createToken(self, fromToken=None, tokenType=None, text=None):
         """
@@ -1510,7 +1407,6 @@ class CommonTreeAdaptor(BaseTreeAdaptor):
             return CommonToken(oldToken=fromToken)
 
         return CommonToken(type=tokenType, text=text)
-
 
     def setTokenBoundaries(self, t, startToken, stopToken):
         """
@@ -1535,31 +1431,26 @@ class CommonTreeAdaptor(BaseTreeAdaptor):
         t.setTokenStartIndex(start)
         t.setTokenStopIndex(stop)
 
-
     def getTokenStartIndex(self, t):
         if t is None:
             return -1
         return t.getTokenStartIndex()
-
 
     def getTokenStopIndex(self, t):
         if t is None:
             return -1
         return t.getTokenStopIndex()
 
-
     def getText(self, t):
         if t is None:
             return None
         return t.text
-
 
     def getType(self, t):
         if t is None:
             return INVALID_TOKEN_TYPE
 
         return t.type
-
 
     def getToken(self, t):
         """
@@ -1571,38 +1462,31 @@ class CommonTreeAdaptor(BaseTreeAdaptor):
         if isinstance(t, CommonTree):
             return t.getToken()
 
-        return None # no idea what to do
-
+        return None  # no idea what to do
 
     def getChild(self, t, i):
         if t is None:
             return None
         return t.getChild(i)
 
-
     def getChildCount(self, t):
         if t is None:
             return 0
         return t.getChildCount()
 
-
     def getParent(self, t):
         return t.getParent()
 
-
     def setParent(self, t, parent):
         t.setParent(parent)
-
 
     def getChildIndex(self, t):
         if t is None:
             return 0
         return t.getChildIndex()
 
-
     def setChildIndex(self, t, index):
         t.setChildIndex(index)
-
 
     def replaceChildren(self, parent, startChildIndex, stopChildIndex, t):
         if parent is not None:
@@ -1624,7 +1508,6 @@ class CommonTreeAdaptor(BaseTreeAdaptor):
 ############################################################################
 
 
-
 class TreeNodeStream(IntStream):
     """@brief A stream of tree nodes
 
@@ -1643,7 +1526,6 @@ class TreeNodeStream(IntStream):
 
         raise NotImplementedError
 
-
     def LT(self, k):
         """
         Get tree node at current input pointer + i ahead where i=1 is next node.
@@ -1660,7 +1542,6 @@ class TreeNodeStream(IntStream):
 
         raise NotImplementedError
 
-
     def getTreeSource(self):
         """
         Where is this stream pulling nodes from?  This is not the name, but
@@ -1668,7 +1549,6 @@ class TreeNodeStream(IntStream):
         """
 
         raise NotImplementedError
-
 
     def getTokenStream(self):
         """
@@ -1680,7 +1560,6 @@ class TreeNodeStream(IntStream):
 
         raise NotImplementedError
 
-
     def getTreeAdaptor(self):
         """
         What adaptor can tell me how to interpret/navigate nodes and
@@ -1688,7 +1567,6 @@ class TreeNodeStream(IntStream):
         """
 
         raise NotImplementedError
-
 
     def setUniqueNavigationNodes(self, uniqueNavigationNodes):
         """
@@ -1701,7 +1579,6 @@ class TreeNodeStream(IntStream):
 
         raise NotImplementedError
 
-
     def reset(self):
         """
         Reset the tree node stream in such a way that it acts like
@@ -1709,7 +1586,6 @@ class TreeNodeStream(IntStream):
         """
 
         raise NotImplementedError
-
 
     def toString(self, start, stop):
         """
@@ -1722,11 +1598,10 @@ class TreeNodeStream(IntStream):
 
         raise NotImplementedError
 
-
     # REWRITING TREES (used by tree parser)
     def replaceChildren(self, parent, startChildIndex, stopChildIndex, t):
         """
- 	Replace from start to stop child index of parent with t, which might
+        Replace from start to stop child index of parent with t, which might
         be a list.  Number of children may be different
         after this call.  The stream is notified because it is walking the
         tree and might need to know you are monkeying with the underlying
@@ -1849,21 +1724,19 @@ class CommonTreeNodeStream(TreeNodeStream):
         # Stack of indexes used for push/pop calls
         self.calls = []
 
-
     def fillBuffer(self):
         """Walk tree with depth-first-search and fill nodes buffer.
         Don't do DOWN, UP nodes if its a list (t is isNil).
         """
 
         self._fillBuffer(self.root)
-        self.p = 0 # buffer of nodes intialized now
-
+        self.p = 0  # buffer of nodes intialized now
 
     def _fillBuffer(self, t):
         nil = self.adaptor.isNil(t)
 
         if not nil:
-            self.nodes.append(t) # add this node
+            self.nodes.append(t)  # add this node
 
         # add DOWN node if t has children
         n = self.adaptor.getChildCount(t)
@@ -1878,7 +1751,6 @@ class CommonTreeNodeStream(TreeNodeStream):
         if not nil and n > 0:
             self.addNavigationNode(UP)
 
-
     def getNodeIndex(self, node):
         """What is the stream index for node? 0..n-1
         Return -1 if node not found.
@@ -1892,7 +1764,6 @@ class CommonTreeNodeStream(TreeNodeStream):
                 return i
 
         return -1
-
 
     def addNavigationNode(self, ttype):
         """
@@ -1919,13 +1790,11 @@ class CommonTreeNodeStream(TreeNodeStream):
 
         self.nodes.append(navNode)
 
-
     def get(self, i):
         if self.p == -1:
             self.fillBuffer()
 
         return self.nodes[i]
-
 
     def LT(self, k):
         if self.p == -1:
@@ -1942,10 +1811,8 @@ class CommonTreeNodeStream(TreeNodeStream):
 
         return self.nodes[self.p + k - 1]
 
-
     def getCurrentSymbol(self):
         return self.LT(1)
-
 
     def LB(self, k):
         """Look backwards k nodes"""
@@ -1958,38 +1825,29 @@ class CommonTreeNodeStream(TreeNodeStream):
 
         return self.nodes[self.p - k]
 
-
     def isEOF(self, obj):
         return self.adaptor.getType(obj) == EOF
-
 
     def getTreeSource(self):
         return self.root
 
-
     def getSourceName(self):
         return self.getTokenStream().getSourceName()
-
 
     def getTokenStream(self):
         return self.tokens
 
-
     def setTokenStream(self, tokens):
         self.tokens = tokens
-
 
     def getTreeAdaptor(self):
         return self.adaptor
 
-
     def hasUniqueNavigationNodes(self):
         return self.uniqueNavigationNodes
 
-
     def setUniqueNavigationNodes(self, uniqueNavigationNodes):
         self.uniqueNavigationNodes = uniqueNavigationNodes
-
 
     def consume(self):
         if self.p == -1:
@@ -1997,29 +1855,23 @@ class CommonTreeNodeStream(TreeNodeStream):
 
         self.p += 1
 
-
     def LA(self, i):
         return self.adaptor.getType(self.LT(i))
-
 
     def mark(self):
         if self.p == -1:
             self.fillBuffer()
 
-
         self.lastMarker = self.index()
         return self.lastMarker
-
 
     def release(self, marker=None):
         # no resources to release
 
         pass
 
-
     def index(self):
         return self.p
-
 
     def rewind(self, marker=None):
         if marker is None:
@@ -2027,13 +1879,11 @@ class CommonTreeNodeStream(TreeNodeStream):
 
         self.seek(marker)
 
-
     def seek(self, index):
         if self.p == -1:
             self.fillBuffer()
 
         self.p = index
-
 
     def push(self, index):
         """
@@ -2041,9 +1891,8 @@ class CommonTreeNodeStream(TreeNodeStream):
         Switch back with pop().
         """
 
-        self.calls.append(self.p) # save current index
+        self.calls.append(self.p)  # save current index
         self.seek(index)
-
 
     def pop(self):
         """
@@ -2055,12 +1904,10 @@ class CommonTreeNodeStream(TreeNodeStream):
         self.seek(ret)
         return ret
 
-
     def reset(self):
         self.p = 0
         self.lastMarker = 0
         self.calls = []
-
 
     def size(self):
         if self.p == -1:
@@ -2068,15 +1915,11 @@ class CommonTreeNodeStream(TreeNodeStream):
 
         return len(self.nodes)
 
-
     # TREE REWRITE INTERFACE
 
     def replaceChildren(self, parent, startChildIndex, stopChildIndex, t):
         if parent is not None:
-            self.adaptor.replaceChildren(
-                parent, startChildIndex, stopChildIndex, t
-                )
-
+            self.adaptor.replaceChildren(parent, startChildIndex, stopChildIndex, t)
 
     def __str__(self):
         """Used for testing, just return the token type stream"""
@@ -2084,10 +1927,7 @@ class CommonTreeNodeStream(TreeNodeStream):
         if self.p == -1:
             self.fillBuffer()
 
-        return ' '.join([str(self.adaptor.getType(node))
-                         for node in self.nodes
-                         ])
-
+        return " ".join([str(self.adaptor.getType(node)) for node in self.nodes])
 
     def toString(self, start, stop):
         if start is None or stop is None:
@@ -2096,14 +1936,14 @@ class CommonTreeNodeStream(TreeNodeStream):
         if self.p == -1:
             self.fillBuffer()
 
-        #System.out.println("stop: "+stop);
-        #if ( start instanceof CommonTree )
+        # System.out.println("stop: "+stop);
+        # if ( start instanceof CommonTree )
         #    System.out.print("toString: "+((CommonTree)start).getToken()+", ");
-        #else
+        # else
         #    System.out.println(start);
-        #if ( stop instanceof CommonTree )
+        # if ( stop instanceof CommonTree )
         #    System.out.println(((CommonTree)stop).getToken());
-        #else
+        # else
         #    System.out.println(stop);
 
         # if we have the token stream, use that to dump text in order
@@ -2117,7 +1957,7 @@ class CommonTreeNodeStream(TreeNodeStream):
                 endTokenIndex = self.adaptor.getTokenStopIndex(start)
 
             elif self.adaptor.getType(stop) == EOF:
-                endTokenIndex = self.size() -2 # don't use EOF
+                endTokenIndex = self.size() - 2  # don't use EOF
 
             return self.tokens.toString(beginTokenIndex, endTokenIndex)
 
@@ -2142,20 +1982,18 @@ class CommonTreeNodeStream(TreeNodeStream):
         # include stop node too
         text = self.adaptor.getText(stop)
         if text is None:
-            text = " " +self.adaptor.getType(stop)
+            text = " " + self.adaptor.getType(stop)
 
         buf.append(text)
 
-        return ''.join(buf)
-
+        return "".join(buf)
 
     ## iterator interface
     def __iter__(self):
         if self.p == -1:
             self.fillBuffer()
 
-        for node in self.nodes:
-            yield node
+        yield from self.nodes
 
 
 #############################################################################
@@ -2163,6 +2001,7 @@ class CommonTreeNodeStream(TreeNodeStream):
 # tree parser
 #
 #############################################################################
+
 
 class TreeParser(BaseRecognizer):
     """@brief Baseclass for generated tree parsers.
@@ -2178,37 +2017,29 @@ class TreeParser(BaseRecognizer):
         self.input = None
         self.setTreeNodeStream(input)
 
-
     def reset(self):
-        BaseRecognizer.reset(self) # reset all recognizer state variables
+        BaseRecognizer.reset(self)  # reset all recognizer state variables
         if self.input is not None:
-            self.input.seek(0) # rewind the input
-
+            self.input.seek(0)  # rewind the input
 
     def setTreeNodeStream(self, input):
         """Set the input stream"""
 
         self.input = input
 
-
     def getTreeNodeStream(self):
         return self.input
-
 
     def getSourceName(self):
         return self.input.getSourceName()
 
-
     def getCurrentInputSymbol(self, input):
         return input.LT(1)
-
 
     def getMissingSymbol(self, input, e, expectedTokenType, follow):
         tokenText = "<missing " + self.tokenNames[expectedTokenType] + ">"
         adaptor = input.adaptor
-        return adaptor.createToken(
-            CommonToken(type=expectedTokenType, text=tokenText))
-
+        return adaptor.createToken(CommonToken(type=expectedTokenType, text=tokenText))
 
     # precompiled regex used by inContext
     dotdot = ".*[^.]\\.\\.[^.].*"
@@ -2231,8 +2062,8 @@ class TreeParser(BaseRecognizer):
         """
 
         return self._inContext(
-            self.input.getTreeAdaptor(), self.tokenNames,
-            self.input.LT(1), context)
+            self.input.getTreeAdaptor(), self.tokenNames, self.input.LT(1), context
+        )
 
     @classmethod
     def _inContext(cls, adaptor, tokenNames, t, context):
@@ -2262,7 +2093,7 @@ class TreeParser(BaseRecognizer):
                 if ni == 0:
                     # ... at start is no-op
                     return True
-                goal = nodes[ni-1]
+                goal = nodes[ni - 1]
                 ancestor = cls._getAncestor(adaptor, tokenNames, t, goal)
                 if ancestor is None:
                     return False
@@ -2294,7 +2125,6 @@ class TreeParser(BaseRecognizer):
 
         return None
 
-
     def matchAny(self):
         """
         Match '.' in tree parser has special meaning.  Skip node or
@@ -2306,14 +2136,14 @@ class TreeParser(BaseRecognizer):
 
         look = self.input.LT(1)
         if self.input.getTreeAdaptor().getChildCount(look) == 0:
-            self.input.consume() # not subtree, consume 1 node and return
+            self.input.consume()  # not subtree, consume 1 node and return
             return
 
         # current node is a subtree, skip to corresponding UP.
         # must count nesting level to get right UP
         level = 0
         tokenType = self.input.getTreeAdaptor().getType(look)
-        while tokenType != EOF and not (tokenType == UP and level==0):
+        while tokenType != EOF and not (tokenType == UP and level == 0):
             self.input.consume()
             look = self.input.LT(1)
             tokenType = self.input.getTreeAdaptor().getType(look)
@@ -2323,8 +2153,7 @@ class TreeParser(BaseRecognizer):
             elif tokenType == UP:
                 level -= 1
 
-        self.input.consume() # consume UP
-
+        self.input.consume()  # consume UP
 
     def mismatch(self, input, ttype, follow):
         """
@@ -2335,7 +2164,6 @@ class TreeParser(BaseRecognizer):
 
         raise MismatchedTreeNodeException(ttype, input)
 
-
     def getErrorHeader(self, e):
         """
         Prefix error message with the grammar name because message is
@@ -2343,11 +2171,9 @@ class TreeParser(BaseRecognizer):
         the input tree not the user.
         """
 
-        return (self.getGrammarFileName() +
-                ": node from {}line {}:{}".format(
-                    "after " if e.approximateLineInfo else '',
-                    e.line,
-                    e.charPositionInLine))
+        return self.getGrammarFileName() + ": node from {}line {}:{}".format(
+            "after " if e.approximateLineInfo else "", e.line, e.charPositionInLine
+        )
 
     def getErrorMessage(self, e):
         """
@@ -2358,18 +2184,15 @@ class TreeParser(BaseRecognizer):
         if isinstance(self, TreeParser):
             adaptor = e.input.getTreeAdaptor()
             e.token = adaptor.getToken(e.node)
-            if e.token is not None: # could be an UP/DOWN node
+            if e.token is not None:  # could be an UP/DOWN node
                 e.token = CommonToken(
-                    type=adaptor.getType(e.node),
-                    text=adaptor.getText(e.node)
-                    )
+                    type=adaptor.getType(e.node), text=adaptor.getText(e.node)
+                )
 
         return BaseRecognizer.getErrorMessage(self, e)
 
-
     def traceIn(self, ruleName, ruleIndex):
         BaseRecognizer.traceIn(self, ruleName, ruleIndex, self.input.LT(1))
-
 
     def traceOut(self, ruleName, ruleIndex):
         BaseRecognizer.traceOut(self, ruleName, ruleIndex, self.input.LT(1))
@@ -2381,7 +2204,8 @@ class TreeParser(BaseRecognizer):
 #
 #############################################################################
 
-class TreeVisitor(object):
+
+class TreeVisitor:
     """Do a depth first walk of a tree, applying pre() and post() actions
     we go.
     """
@@ -2423,13 +2247,15 @@ class TreeVisitor(object):
 
         return t
 
+
 #############################################################################
 #
 # tree iterator
 #
 #############################################################################
 
-class TreeIterator(object):
+
+class TreeIterator:
     """
     Return a node stream from a doubly-linked tree whose nodes
     know what child index they are.
@@ -2456,16 +2282,13 @@ class TreeIterator(object):
         self.up = adaptor.createFromType(UP, "UP")
         self.eof = adaptor.createFromType(EOF, "EOF")
 
-
     def reset(self):
         self.first_time = True
         self.tree = self.root
         self.nodes = []
 
-
     def __iter__(self):
         return self
-
 
     def has_next(self):
         if self.first_time:
@@ -2482,7 +2305,6 @@ class TreeIterator(object):
 
         # back at root?
         return self.adaptor.getParent(self.tree) is not None
-
 
     def __next__(self):
         if not self.has_next():
@@ -2516,8 +2338,9 @@ class TreeIterator(object):
         # if no children, look for next sibling of tree or ancestor
         parent = self.adaptor.getParent(self.tree)
         # while we're out of siblings, keep popping back up towards root
-        while (parent is not None
-               and self.adaptor.getChildIndex(self.tree)+1 >= self.adaptor.getChildCount(parent)):
+        while parent is not None and self.adaptor.getChildIndex(
+            self.tree
+        ) + 1 >= self.adaptor.getChildCount(parent):
             # we're moving back up
             self.nodes.append(self.up)
             self.tree = parent
@@ -2525,17 +2348,16 @@ class TreeIterator(object):
 
         # no nodes left?
         if parent is None:
-            self.tree = None # back at root? nothing left then
-            self.nodes.append(self.eof) # add to queue, might have UP nodes in there
+            self.tree = None  # back at root? nothing left then
+            self.nodes.append(self.eof)  # add to queue, might have UP nodes in there
             return self.nodes.pop(0)
 
         # must have found a node with an unvisited sibling
         # move to it and return it
         nextSiblingIndex = self.adaptor.getChildIndex(self.tree) + 1
         self.tree = self.adaptor.getChild(parent, nextSiblingIndex)
-        self.nodes.append(self.tree) # add to queue, might have UP nodes in there
+        self.nodes.append(self.tree)  # add to queue, might have UP nodes in there
         return self.nodes.pop(0)
-
 
 
 #############################################################################
@@ -2544,7 +2366,8 @@ class TreeIterator(object):
 #
 #############################################################################
 
-class RewriteRuleElementStream(object):
+
+class RewriteRuleElementStream:
     """@brief Internal helper class.
 
     A generic list of elements tracked in an alternative to be used in
@@ -2595,7 +2418,6 @@ class RewriteRuleElementStream(object):
             # Create a stream with one element
             self.add(elements)
 
-
     def reset(self):
         """
         Reset the condition of this stream so that it appears we have
@@ -2607,16 +2429,15 @@ class RewriteRuleElementStream(object):
         self.cursor = 0
         self.dirty = True
 
-
     def add(self, el):
         if el is None:
             return
 
-        if self.elements is not None: # if in list, just add
+        if self.elements is not None:  # if in list, just add
             self.elements.append(el)
             return
 
-        if self.singleElement is None: # no elements yet, track w/o list
+        if self.singleElement is None:  # no elements yet, track w/o list
             self.singleElement = el
             return
 
@@ -2625,7 +2446,6 @@ class RewriteRuleElementStream(object):
         self.elements.append(self.singleElement)
         self.singleElement = None
         self.elements.append(el)
-
 
     def nextTree(self):
         """
@@ -2636,9 +2456,7 @@ class RewriteRuleElementStream(object):
         size==1. If we've already used the element, dup (dirty bit set).
         """
 
-        if (self.dirty
-            or (self.cursor >= len(self) and len(self) == 1)
-            ):
+        if self.dirty or (self.cursor >= len(self) and len(self) == 1):
             # if out of elements and size is 1, dup
             el = self._next()
             return self.dup(el)
@@ -2646,7 +2464,6 @@ class RewriteRuleElementStream(object):
         # test size above then fetch
         el = self._next()
         return el
-
 
     def _next(self):
         """
@@ -2660,8 +2477,8 @@ class RewriteRuleElementStream(object):
         if len(self) == 0:
             raise RewriteEmptyStreamException(self.elementDescription)
 
-        if self.cursor >= len(self): # out of elements?
-            if len(self) == 1: # if size is 1, it's ok; return and we'll dup
+        if self.cursor >= len(self):  # out of elements?
+            if len(self) == 1:  # if size is 1, it's ok; return and we'll dup
                 return self.toTree(self.singleElement)
 
             # out of elements and size was not 1, so we can't dup
@@ -2669,14 +2486,13 @@ class RewriteRuleElementStream(object):
 
         # we have elements
         if self.singleElement is not None:
-            self.cursor += 1 # move cursor even for single element list
+            self.cursor += 1  # move cursor even for single element list
             return self.toTree(self.singleElement)
 
         # must have more than one in list, pull from elements
         o = self.toTree(self.elements[self.cursor])
         self.cursor += 1
         return o
-
 
     def dup(self, el):
         """
@@ -2688,7 +2504,6 @@ class RewriteRuleElementStream(object):
 
         raise NotImplementedError
 
-
     def toTree(self, el):
         """
         Ensure stream emits trees; tokens must be converted to AST nodes.
@@ -2697,14 +2512,10 @@ class RewriteRuleElementStream(object):
 
         return el
 
-
     def hasNext(self):
-        return ( (self.singleElement is not None and self.cursor < 1)
-                 or (self.elements is not None
-                     and self.cursor < len(self.elements)
-                     )
-                 )
-
+        return (self.singleElement is not None and self.cursor < 1) or (
+            self.elements is not None and self.cursor < len(self.elements)
+        )
 
     def size(self):
         if self.singleElement is not None:
@@ -2716,7 +2527,6 @@ class RewriteRuleElementStream(object):
         return 0
 
     __len__ = size
-
 
     def getDescription(self):
         """Deprecated. Directly access elementDescription attribute"""
@@ -2732,15 +2542,12 @@ class RewriteRuleTokenStream(RewriteRuleElementStream):
         # This way we can do hetero tree nodes in rewrite.
         return el
 
-
     def nextNode(self):
         t = self._next()
         return self.adaptor.createWithPayload(t)
 
-
     def nextToken(self):
         return self._next()
-
 
     def dup(self, el):
         raise TypeError("dup can't be called for a token stream.")
@@ -2765,9 +2572,7 @@ class RewriteRuleSubtreeStream(RewriteRuleElementStream):
         and super.next() doesn't know which to call: dup node or dup tree.
         """
 
-        if (self.dirty
-            or (self.cursor >= len(self) and len(self) == 1)
-            ):
+        if self.dirty or (self.cursor >= len(self) and len(self) == 1):
             # if out of elements and size is 1, dup (at most a single node
             # since this is for making root nodes).
             el = self._next()
@@ -2781,10 +2586,8 @@ class RewriteRuleSubtreeStream(RewriteRuleElementStream):
         # dup just the root (want node here)
         return self.adaptor.dupNode(el)
 
-
     def dup(self, el):
         return self.adaptor.dupTree(el)
-
 
 
 class RewriteRuleNodeStream(RewriteRuleElementStream):
@@ -2796,14 +2599,12 @@ class RewriteRuleNodeStream(RewriteRuleElementStream):
     def nextNode(self):
         return self._next()
 
-
     def toTree(self, el):
         return self.adaptor.dupNode(el)
 
-
     def dup(self, el):
         # we dup every node, so don't have to worry about calling dup; short-
-        #circuited next() so it doesn't call.
+        # circuited next() so it doesn't call.
         raise TypeError("dup can't be called for a node stream.")
 
 
@@ -2820,10 +2621,8 @@ class TreeRuleReturnScope(RuleReturnScope):
         self.start = None
         self.tree = None
 
-
     def getStart(self):
         return self.start
-
 
     def getTree(self):
         return self.tree

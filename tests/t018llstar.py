@@ -1,17 +1,17 @@
-import antlr3
-import testbase
-import unittest
 import os
-import sys
-from io import StringIO
+import unittest
+
+import testbase
+
+import antlr3
+
 
 class t018llstar(testbase.ANTLRTest):
     def setUp(self):
         self.compileGrammar()
-        
 
     def testValid(self):
-        inputPath = os.path.splitext(__file__)[0] + '.input'
+        inputPath = os.path.splitext(__file__)[0] + ".input"
         with open(inputPath) as f:
             cStream = antlr3.StringStream(f.read())
         lexer = self.getLexer(cStream)
@@ -21,11 +21,12 @@ class t018llstar(testbase.ANTLRTest):
 
         output = parser.output.getvalue()
 
-        outputPath = os.path.splitext(__file__)[0] + '.output'
+        outputPath = os.path.splitext(__file__)[0] + ".output"
         with open(outputPath) as f:
             testOutput = f.read()
 
         self.assertEqual(output, testOutput)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

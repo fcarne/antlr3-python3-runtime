@@ -1,12 +1,14 @@
-import antlr3
-import testbase
 import unittest
+
+import testbase
+
+import antlr3
+
 
 class t003lexer(testbase.ANTLRTest):
     def setUp(self):
         self.compileGrammar()
-        
-        
+
     def lexerClass(self, base):
         class TLexer(base):
             def emitErrorMessage(self, msg):
@@ -18,10 +20,9 @@ class t003lexer(testbase.ANTLRTest):
                 raise re
 
         return TLexer
-    
-        
+
     def testValid(self):
-        stream = antlr3.StringStream('0fooze1')
+        stream = antlr3.StringStream("0fooze1")
         lexer = self.getLexer(stream)
 
         token = lexer.nextToken()
@@ -35,10 +36,9 @@ class t003lexer(testbase.ANTLRTest):
 
         token = lexer.nextToken()
         self.assertEqual(token.type, self.lexerModule.EOF)
-        
 
     def testMalformedInput(self):
-        stream = antlr3.StringStream('2')
+        stream = antlr3.StringStream("2")
         lexer = self.getLexer(stream)
 
         try:
@@ -46,8 +46,8 @@ class t003lexer(testbase.ANTLRTest):
             self.fail()
 
         except antlr3.NoViableAltException as exc:
-            self.assertEqual(exc.unexpectedType, '2')
-            
+            self.assertEqual(exc.unexpectedType, "2")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -1,12 +1,13 @@
-import antlr3
-import testbase
 import unittest
+
+import testbase
+
+import antlr3
 
 
 class t040bug80(testbase.ANTLRTest):
     def setUp(self):
         self.compileGrammar()
-        
 
     def lexerClass(self, base):
         class TLexer(base):
@@ -15,10 +16,9 @@ class t040bug80(testbase.ANTLRTest):
                 raise
 
         return TLexer
-    
-        
+
     def testValid1(self):
-        cStream = antlr3.StringStream('defined')
+        cStream = antlr3.StringStream("defined")
         lexer = self.getLexer(cStream)
         while True:
             t = lexer.nextToken()
@@ -27,7 +27,5 @@ class t040bug80(testbase.ANTLRTest):
             print(t)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-

@@ -36,8 +36,6 @@ from .constants import INVALID_TOKEN_TYPE
 class BacktrackingFailed(Exception):
     """@brief Raised to signal failed backtrack attempt"""
 
-    pass
-
 
 class RecognitionException(Exception):
     """@brief The root of the ANTLR exception hierarchy.
@@ -60,7 +58,7 @@ class RecognitionException(Exception):
     want to quit upon first error, you can turn off the automatic error
     handling mechanism using rulecatch action, but you still need to
     override methods mismatch and recoverFromMismatchSet.
-    
+
     In general, the recognition exceptions can track where in a grammar a
     problem occurred and/or what was the expected input.  While the parser
     knows its state (such as current input symbol and line info) that
@@ -69,7 +67,7 @@ class RecognitionException(Exception):
     perhaps print an entire line of input not just a single token, for example.
     Better to just say the recognizer had a problem and then let the parser
     figure out a fancy report.
-    
+
     """
 
     def __init__(self, input=None):
@@ -107,13 +105,12 @@ class RecognitionException(Exception):
         # that info is approximate.
         self.approximateLineInfo = False
 
-        
         if input:
             self.input = input
             self.index = input.index()
 
             # late import to avoid cyclic dependencies
-            from .streams import TokenStream, CharStream
+            from .streams import CharStream, TokenStream
             from .tree import TreeNodeStream
 
             if isinstance(self.input, TokenStream):
@@ -134,9 +131,9 @@ class RecognitionException(Exception):
                     self.c = self.input.LA(1)
 
     def extractInformationFromTreeNodeStream(self, nodes):
-        from .tree import Tree, CommonTree
         from .tokens import CommonToken
-        
+        from .tree import CommonTree, Tree
+
         self.node = nodes.LT(1)
         adaptor = nodes.adaptor
         payload = adaptor.getToken(self.node)
@@ -154,14 +151,14 @@ class RecognitionException(Exception):
                         self.charPositionInLine = priorPayload.charPositionInLine
                         self.approximateLineInfo = True
                         break
-                    
+
                     i -= 1
                     priorNode = nodes.LT(i)
-                    
-            else: # node created from real token
+
+            else:  # node created from real token
                 self.line = payload.line
                 self.charPositionInLine = payload.charPositionInLine
-                
+
         elif isinstance(self.node, Tree):
             self.line = self.node.line
             self.charPositionInLine = self.node.charPositionInLine
@@ -173,7 +170,6 @@ class RecognitionException(Exception):
             text = adaptor.getText(self.node)
             self.token = CommonToken(type=type, text=text)
 
-     
     def getUnexpectedType(self):
         """Return the token type or char of the unexpected input element"""
 
@@ -191,20 +187,20 @@ class RecognitionException(Exception):
             return self.c
 
     unexpectedType = property(getUnexpectedType)
-    
+
 
 class MismatchedTokenException(RecognitionException):
     """@brief A mismatched char or Token or tree node."""
-    
+
     def __init__(self, expecting, input):
         super().__init__(input)
         self.expecting = expecting
-        
 
     def __str__(self):
         return "MismatchedTokenException({!r}!={!r})".format(
             self.getUnexpectedType(), self.expecting
-            )
+        )
+
     __repr__ = __str__
 
 
@@ -214,16 +210,16 @@ class UnwantedTokenException(MismatchedTokenException):
     def getUnexpectedToken(self):
         return self.token
 
-
     def __str__(self):
-        exp = ", expected {}".format(self.expecting)
+        exp = f", expected {self.expecting}"
         if self.expecting == INVALID_TOKEN_TYPE:
             exp = ""
 
         if not self.token:
-            return "UnwantedTokenException(found={}{})".format(None, exp)
+            return f"UnwantedTokenException(found={None}{exp})"
 
-        return "UnwantedTokenException(found={}{})".format(self.token.text, exp)
+        return f"UnwantedTokenException(found={self.token.text}{exp})"
+
     __repr__ = __str__
 
 
@@ -238,20 +234,20 @@ class MissingTokenException(MismatchedTokenException):
 
         self.inserted = inserted
 
-
     def getMissingType(self):
         return self.expecting
-
 
     def __str__(self):
         if self.token:
             if self.inserted:
                 return "MissingTokenException(inserted {!r} at {!r})".format(
-                    self.inserted, self.token.text)
+                    self.inserted, self.token.text
+                )
 
-            return "MissingTokenException(at {!r})".format(self.token.text)
+            return f"MissingTokenException(at {self.token.text!r})"
 
         return "MissingTokenException"
+
     __repr__ = __str__
 
 
@@ -263,14 +259,14 @@ class MismatchedRangeException(RecognitionException):
 
         self.a = a
         self.b = b
-        
 
     def __str__(self):
         return "MismatchedRangeException({!r} not in [{!r}..{!r}])".format(
             self.getUnexpectedType(), self.a, self.b
-            )
+        )
+
     __repr__ = __str__
-    
+
 
 class MismatchedSetException(RecognitionException):
     """@brief The next token does not match a set of expected types."""
@@ -279,44 +275,43 @@ class MismatchedSetException(RecognitionException):
         super().__init__(input)
 
         self.expecting = expecting
-        
 
     def __str__(self):
         return "MismatchedSetException({!r} not in {!r})".format(
             self.getUnexpectedType(), self.expecting
-            )
+        )
+
     __repr__ = __str__
 
 
 class MismatchedNotSetException(MismatchedSetException):
     """@brief Used for remote debugger deserialization"""
-    
+
     def __str__(self):
         return "MismatchedNotSetException({!r}!={!r})".format(
             self.getUnexpectedType(), self.expecting
-            )
+        )
+
     __repr__ = __str__
 
 
 class NoViableAltException(RecognitionException):
     """@brief Unable to decide which alternative to choose."""
 
-    def __init__(
-        self, grammarDecisionDescription, decisionNumber, stateNumber, input
-        ):
+    def __init__(self, grammarDecisionDescription, decisionNumber, stateNumber, input):
         super().__init__(input)
 
         self.grammarDecisionDescription = grammarDecisionDescription
         self.decisionNumber = decisionNumber
         self.stateNumber = stateNumber
 
-
     def __str__(self):
         return "NoViableAltException({!r}!=[{!r}])".format(
             self.unexpectedType, self.grammarDecisionDescription
-            )
+        )
+
     __repr__ = __str__
-    
+
 
 class EarlyExitException(RecognitionException):
     """@brief The recognizer did not match anything for a (..)+ loop."""
@@ -338,27 +333,29 @@ class FailedPredicateException(RecognitionException):
 
     def __init__(self, input, ruleName, predicateText):
         super().__init__(input)
-        
+
         self.ruleName = ruleName
         self.predicateText = predicateText
 
-
     def __str__(self):
         return "FailedPredicateException({},{{{}}}?)".format(
-            self.ruleName, self.predicateText)
+            self.ruleName, self.predicateText
+        )
+
     __repr__ = __str__
-    
+
 
 class MismatchedTreeNodeException(RecognitionException):
     """@brief The next tree mode does not match the expected type."""
 
     def __init__(self, expecting, input):
         super().__init__(input)
-        
+
         self.expecting = expecting
 
     def __str__(self):
         return "MismatchedTreeNodeException({!r}!={!r})".format(
             self.getUnexpectedType(), self.expecting
-            )
+        )
+
     __repr__ = __str__

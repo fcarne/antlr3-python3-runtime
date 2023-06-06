@@ -1,15 +1,16 @@
 import unittest
 
+
 class BrokenTest(unittest.TestCase.failureException):
     def __repr__(self):
         name, reason = self.args
-        return '{}: {}: {} works now'.format(
-            self.__class__.__name__, name, reason)
+        return f"{self.__class__.__name__}: {name}: {reason} works now"
 
 
 def broken(reason, *exceptions):
-    '''Indicates a failing (or erroneous) test case fails that should succeed.
-    If the test fails with an exception, list the exception type in args'''
+    """Indicates a failing (or erroneous) test case fails that should succeed.
+    If the test fails with an exception, list the exception type in args"""
+
     def wrapper(test_method):
         def replacement(*args, **kwargs):
             try:
@@ -18,10 +19,10 @@ def broken(reason, *exceptions):
                 pass
             else:
                 raise BrokenTest(test_method.__name__, reason)
+
         replacement.__doc__ = test_method.__doc__
-        replacement.__name__ = 'XXX_' + test_method.__name__
+        replacement.__name__ = "XXX_" + test_method.__name__
         replacement.todo = reason
         return replacement
+
     return wrapper
-
-

@@ -512,4 +512,3 @@ LINE_COMMENT
 LINE_COMMAND 
     : '#' ~('\n'|'\r')* '\r'? '\n' {$channel=HIDDEN;}
     ;
-

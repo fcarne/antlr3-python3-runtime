@@ -13,4 +13,3 @@ A: 'a';
 
 fragment
 B: 'a';
-
